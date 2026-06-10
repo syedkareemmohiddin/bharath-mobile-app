@@ -20,7 +20,7 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
       canvas.toBlob(async (blob) => {
         const fileName = 'device_' + Date.now() + '.jpg';
-        const { data, error } = await supabase.storage
+        const { error } = await supabase.storage
           .from('device-photos')
           .upload(fileName, blob, { contentType: 'image/jpeg', upsert: true });
         if (!error) {

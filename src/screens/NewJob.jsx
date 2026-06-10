@@ -4,6 +4,38 @@ import { supabase } from '../supabase';
 const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedParts, setSelectedParts, newParts, setNewParts, newPartForm, setNewPartForm, fetchAll, jobs, purchases }) => {
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handlePhotoCapture = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const canvas = document.createElement('canvas');
+    const img = new Image();
+    img.onload = async () => {
+      const maxSize = 800;
+      let w = img.width, h = img.height;
+      if (w > maxSize || h > maxSize) {
+        if (w > h) { h = (h / w) * maxSize; w = maxSize; }
+        else { w = (w / h) * maxSize; h = maxSize; }
+      }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob(async (blob) => {
+        const fileName = 'device_' + Date.now() + '.jpg';
+        const { data, error } = await supabase.storage
+          .from('device-photos')
+          .upload(fileName, blob, { contentType: 'image/jpeg', upsert: true });
+        if (!error) {
+          const { data: urlData } = supabase.storage
+            .from('device-photos')
+            .getPublicUrl(fileName);
+          setForm(f => ({ ...f, photoUrl: urlData.publicUrl }));
+          alert('Photo uploaded!');
+        } else {
+          alert('Photo upload failed: ' + error.message);
+        }
+      }, 'image/jpeg', 0.7);
+    };
+    img.src = URL.createObjectURL(file);
+  };
 
   return (
     <div style={{ padding: 20 }}>
@@ -18,13 +50,28 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
         { label: 'Delivery Date', name: 'deliveryDate', type: 'date' },
         { label: 'Delivery Time (optional)', name: 'deliveryTime', type: 'time' },
         { label: 'Advance Payment (optional)', name: 'advancePayment', placeholder: '0', type: 'number' },
+{ label: 'Device Password (optional)', name: 'devicePassword', placeholder: 'PIN or pattern', type: 'text' },
       ].map(field => (
         <div key={field.name} style={{ marginBottom: 14 }}>
           <div style={{ fontSize: 13, color: '#555', marginBottom: 4 }}>{field.label}</div>
           <input name={field.name} type={field.type || 'text'} placeholder={field.placeholder} value={form[field.name] || ''} onChange={handleChange}
             style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 15, boxSizing: 'border-box' }} />
         </div>
-      ))}
+      ))}{/* PHOTO CAPTURE */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 13, color: '#555', marginBottom: 4 }}>Device Photo (optional)</div>
+        <input type='file' accept='image/*' capture='environment' onChange={handlePhotoCapture}
+          style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 13, boxSizing: 'border-box' }} />
+        {form.photoUrl && (
+          <div style={{ marginTop: 8 }}>
+            <img src={form.photoUrl} alt='Device' style={{ width: '100%', borderRadius: 8, maxHeight: 200, objectFit: 'cover' }} />
+            <button onClick={() => setForm(f => ({ ...f, photoUrl: '' }))}
+              style={{ width: '100%', marginTop: 6, background: '#c62828', color: 'white', border: 'none', borderRadius: 8, padding: 6, fontSize: 12, cursor: 'pointer' }}>
+              Remove Photo
+            </button>
+          </div>
+        )}
+      </div>
 
 <div style={{ marginBottom: 16, position: 'relative' }}>
         <div style={{ fontSize: 13, color: '#555', marginBottom: 4 }}>Complaint / Service / Software *</div>

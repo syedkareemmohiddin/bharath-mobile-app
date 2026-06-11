@@ -33,6 +33,7 @@ function App() {
   const [filterDateTo, setFilterDateTo] = useState('');
   const [loading, setLoading] = useState(false);
   const [openingCash, setOpeningCash] = useState(0);
+  const [dashDate, setDashDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentModal, setPaymentModal] = useState({ show: false, title: '', subtitle: '', defaultAmount: '', onConfirm: null });
   const [form, setForm] = useState({
     customerName: '', phone: '', deviceModel: '', complaint: '',
@@ -103,6 +104,22 @@ function App() {
   };
 
   const saveOpeningCash = async (amount) => {
+    const getDayData = (date) => {
+    const istOffset = 5.5 * 60 * 60000;
+    const toIST = (ts) => new Date(new Date(ts).getTime() + istOffset).toISOString().split('T')[0];
+    const collected = jobs.filter(j => (j.status === 'Delivered' || j.status === 'Partial') && j.delivery_date === date).reduce((s, j) => s + Number(j.amount_paid || 0), 0);
+    const advances = jobs.filter(j => j.advance_date === date).reduce((s, j) => s + Number(j.amount_paid || 0), 0);
+    const daySales = sales.filter(s => s.created_at && toIST(s.created_at) === date).reduce((s, j) => s + Number(j.total || 0), 0);
+    const dayExpenses = expenses.filter(e => e.created_at && toIST(e.created_at) === date).reduce((s, e) => s + Number(e.amount || 0), 0);
+    const dayPurchases = purchases.filter(p => (p.purchase_date || (p.created_at ? toIST(p.created_at) : null)) === date);
+    const cashPurchases = dayPurchases.filter(p => p.payment_type === 'Cash').reduce((s, p) => s + Number(p.total || 0), 0);
+    const totalPurchases = dayPurchases.reduce((s, p) => s + Number(p.total || 0), 0);
+    const partsCost = jobParts.filter(jp => { const job = jobs.find(j => j.job_id === jp.job_id); return job && (job.status === 'Delivered' || job.status === 'Partial') && job.delivery_date === date; }).reduce((s, jp) => s + Number(jp.total || 0), 0);
+    const dayVP = vendorPayments.filter(vp => vp.created_at && toIST(vp.created_at) === date).reduce((s, vp) => s + Number(vp.amount || 0), 0);
+    const salePurchaseCost = sales.filter(s => s.created_at && toIST(s.created_at) === date).reduce((sum, s) => sum + (Number(s.purchase_cost || 0) * Number(s.quantity || 1)), 0);
+    const netProfit = Math.round((collected + daySales - partsCost - salePurchaseCost) * 100) / 100;
+    return { collected, advances, sales: daySales, cashPurchases, purchases: totalPurchases, partsCost, vendorPayments: dayVP, expenses: dayExpenses, netProfit, opening: 0 };
+  };
     const todayDate = new Date().toISOString().split('T')[0];
     const { data } = await supabase.from('daily_cash').select('*').eq('date', todayDate);
     if (data && data.length > 0) {
@@ -540,6 +557,7 @@ function App() {
           filterDateFrom={filterDateFrom} filterDateTo={filterDateTo}
           setFilterDateFrom={setFilterDateFrom} setFilterDateTo={setFilterDateTo}
           openingCash={openingCash} saveOpeningCash={saveOpeningCash}
+          dashDate={dashDate} setDashDate={setDashDate} getDayData={getDayData}
           {...commonJobProps}
         />
       )}

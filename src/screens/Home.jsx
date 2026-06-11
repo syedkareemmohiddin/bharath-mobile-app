@@ -2,7 +2,7 @@ import React from 'react';
 import { fmtDate } from '../utils/format';
 import JobCard from '../components/JobCard';
 
-const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, todaySales, todayExpenses, todayPurchases, todayCashPurchases, todayPartsCost, todayVendorPayments, todayNetProfit, totalCollected, vendorPayable, today, setScreen, fetchAll, onMarkDelivered, onCollectBalance, onMarkReturned, onEditJob, onDeleteJob, onCollectAdvance, filteredTx, filterDateFrom, filterDateTo, setFilterDateFrom, setFilterDateTo, openingCash, saveOpeningCash }) => {
+const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, todaySales, todayExpenses, todayPurchases, todayCashPurchases, todayPartsCost, todayVendorPayments, todayNetProfit, totalCollected, vendorPayable, today, setScreen, fetchAll, onMarkDelivered, onCollectBalance, onMarkReturned, onEditJob, onDeleteJob, onCollectAdvance, filteredTx, filterDateFrom, filterDateTo, setFilterDateFrom, setFilterDateTo, openingCash, saveOpeningCash, dashDate, setDashDate, getDayData }) => {
   const [showBillWise, setShowBillWise] = React.useState(false);
   const [billWiseDate, setBillWiseDate] = React.useState(today);
   const [showRecentJobs, setShowRecentJobs] = React.useState(false);
@@ -13,8 +13,21 @@ const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, t
       {/* TODAY SUMMARY */}
       <div style={{ background: 'white', borderRadius: 12, padding: 16, marginBottom: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <div style={{ fontSize: 14, fontWeight: 'bold', color: '#333' }}>Today Summary</div>
-          <div style={{ fontSize: 12, color: '#999' }}>📅 {fmtDate(today)}</div>
+          <div style={{ fontSize: 14, fontWeight: 'bold', color: '#333' }}>
+            {dashDate === today ? 'Today Summary' : 'Summary — ' + dashDate}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 12, color: '#999' }}>📅</span>
+            <input type='date' value={dashDate} max={today}
+              onChange={e => setDashDate(e.target.value)}
+              style={{ border: '1px solid #ddd', borderRadius: 6, padding: '2px 6px', fontSize: 12, color: '#333', background: dashDate !== today ? '#fff8e1' : 'white' }} />
+            {dashDate !== today && (
+              <button onClick={() => setDashDate(today)}
+                style={{ fontSize: 11, background: '#1a73e8', color: 'white', border: 'none', borderRadius: 6, padding: '2px 8px', cursor: 'pointer' }}>
+                Today
+              </button>
+            )}
+          </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <div style={{ fontSize: 13, color: '#555' }}>Opening Cash</div>
@@ -28,52 +41,64 @@ const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, t
             </button>
           </div>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <div style={{ fontSize: 13, color: '#555' }}>Repair Collected</div>
-          <div style={{ fontSize: 13, fontWeight: 'bold', color: '#2e7d32' }}>Rs.{todayCollected}</div>
-        </div>
-        {todayAdvances > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-            <div style={{ fontSize: 13, color: '#555' }}>Advance Received</div>
-            <div style={{ fontSize: 13, fontWeight: 'bold', color: '#1a73e8' }}>Rs.{todayAdvances}</div>
-          </div>
-        )}
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <div style={{ fontSize: 13, color: '#555' }}>Accessories Sales</div>
-          <div style={{ fontSize: 13, fontWeight: 'bold', color: '#2e7d32' }}>Rs.{todaySales}</div>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <div style={{ fontSize: 13, color: '#555' }}>Purchases (Cash)</div>
-          <div style={{ fontSize: 13, fontWeight: 'bold', color: '#c62828' }}>Rs.{todayCashPurchases}</div>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <div style={{ fontSize: 13, color: '#555' }}>Purchases (Credit)</div>
-          <div style={{ fontSize: 13, fontWeight: 'bold', color: '#e65100' }}>Rs.{todayPurchases - todayCashPurchases}</div>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <div style={{ fontSize: 13, color: '#555' }}>Parts Cost</div>
-          <div style={{ fontSize: 13, fontWeight: 'bold', color: '#c62828' }}>Rs.{todayPartsCost}</div>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <div style={{ fontSize: 13, color: '#555' }}>Vendor Payments</div>
-          <div style={{ fontSize: 13, fontWeight: 'bold', color: '#c62828' }}>Rs.{todayVendorPayments}</div>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <div style={{ fontSize: 13, color: '#555' }}>Expenses</div>
-          <div style={{ fontSize: 13, fontWeight: 'bold', color: '#c62828' }}>Rs.{todayExpenses}</div>
-        </div>
-        <div style={{ borderTop: '1px solid #eee', marginTop: 8, paddingTop: 8, display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-          <div style={{ fontSize: 14, fontWeight: 'bold', color: '#333' }}>Net Profit</div>
-          <div style={{ fontSize: 14, fontWeight: 'bold', color: todayNetProfit >= 0 ? '#2e7d32' : '#c62828' }}>
-            Rs.{todayNetProfit}
-          </div>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 6, borderTop: '1px solid #eee' }}>
-          <div style={{ fontSize: 14, fontWeight: 'bold', color: '#333' }}>Closing Cash</div>
-          <div style={{ fontSize: 14, fontWeight: 'bold', color: '#1a73e8' }}>
-            Rs.{openingCash + todayCollected + todayAdvances + todaySales - todayExpenses - todayCashPurchases - todayVendorPayments}
-          </div>
-        </div>
+        {(() => {
+          const d = dashDate === today ? {
+            collected: todayCollected, advances: todayAdvances, sales: todaySales,
+            cashPurchases: todayCashPurchases, purchases: todayPurchases,
+            partsCost: todayPartsCost, vendorPayments: todayVendorPayments,
+            expenses: todayExpenses, netProfit: todayNetProfit, opening: openingCash
+          } : getDayData(dashDate);
+          return (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ fontSize: 13, color: '#555' }}>Repair Collected</div>
+                <div style={{ fontSize: 13, fontWeight: 'bold', color: '#2e7d32' }}>Rs.{d.collected}</div>
+              </div>
+              {d.advances > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div style={{ fontSize: 13, color: '#555' }}>Advance Received</div>
+                  <div style={{ fontSize: 13, fontWeight: 'bold', color: '#1a73e8' }}>Rs.{d.advances}</div>
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ fontSize: 13, color: '#555' }}>Accessories Sales</div>
+                <div style={{ fontSize: 13, fontWeight: 'bold', color: '#2e7d32' }}>Rs.{d.sales}</div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ fontSize: 13, color: '#555' }}>Purchases (Cash)</div>
+                <div style={{ fontSize: 13, fontWeight: 'bold', color: '#c62828' }}>Rs.{d.cashPurchases}</div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ fontSize: 13, color: '#555' }}>Purchases (Credit)</div>
+                <div style={{ fontSize: 13, fontWeight: 'bold', color: '#e65100' }}>Rs.{d.purchases - d.cashPurchases}</div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ fontSize: 13, color: '#555' }}>Parts Cost</div>
+                <div style={{ fontSize: 13, fontWeight: 'bold', color: '#c62828' }}>Rs.{d.partsCost}</div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ fontSize: 13, color: '#555' }}>Vendor Payments</div>
+                <div style={{ fontSize: 13, fontWeight: 'bold', color: '#c62828' }}>Rs.{d.vendorPayments}</div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ fontSize: 13, color: '#555' }}>Expenses</div>
+                <div style={{ fontSize: 13, fontWeight: 'bold', color: '#c62828' }}>Rs.{d.expenses}</div>
+              </div>
+              <div style={{ borderTop: '1px solid #eee', marginTop: 8, paddingTop: 8, display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                <div style={{ fontSize: 14, fontWeight: 'bold', color: '#333' }}>Net Profit</div>
+                <div style={{ fontSize: 14, fontWeight: 'bold', color: d.netProfit >= 0 ? '#2e7d32' : '#c62828' }}>
+                  Rs.{d.netProfit}
+                </div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 6, borderTop: '1px solid #eee' }}>
+                <div style={{ fontSize: 14, fontWeight: 'bold', color: '#333' }}>Closing Cash</div>
+                <div style={{ fontSize: 14, fontWeight: 'bold', color: '#1a73e8' }}>
+                  Rs.{d.opening + d.collected + d.advances + d.sales - d.expenses - d.cashPurchases - d.vendorPayments}
+                </div>
+              </div>
+            </>
+          );
+        })()}
 
         {/* BILL WISE PROFIT */}
         <div style={{ marginTop: 12, borderTop: '1px solid #eee', paddingTop: 8 }}>

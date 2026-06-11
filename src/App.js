@@ -114,7 +114,7 @@ function App() {
     setOpeningCash(amount);
   };
 
-  const getDayData = (date) => {
+  const getDayData = async (date) => {
     const istOffset = 5.5 * 60 * 60000;
     const toIST = (ts) => new Date(new Date(ts).getTime() + istOffset).toISOString().split('T')[0];
     const collected = jobs.filter(j => (j.status === 'Delivered' || j.status === 'Partial') && j.delivery_date === date).reduce((s, j) => s + Number(j.amount_paid || 0), 0);
@@ -128,7 +128,9 @@ function App() {
     const dayVP = vendorPayments.filter(vp => vp.created_at && toIST(vp.created_at) === date).reduce((s, vp) => s + Number(vp.amount || 0), 0);
     const salePurchaseCost = sales.filter(s => s.created_at && toIST(s.created_at) === date).reduce((sum, s) => sum + (Number(s.purchase_cost || 0) * Number(s.quantity || 1)), 0);
     const netProfit = Math.round((collected + daySales - partsCost - salePurchaseCost) * 100) / 100;
-    return { collected, advances, sales: daySales, cashPurchases, purchases: totalPurchases, partsCost, vendorPayments: dayVP, expenses: dayExpenses, netProfit, opening: 0 };
+    const { data: dcData } = await supabase.from('daily_cash').select('*').eq('date', date);
+    const opening = dcData && dcData.length > 0 ? dcData[0].opening_balance || 0 : 0;
+    return { collected, advances, sales: daySales, cashPurchases, purchases: totalPurchases, partsCost, vendorPayments: dayVP, expenses: dayExpenses, netProfit, opening };
   };
 
   const handleSave = async () => {

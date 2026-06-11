@@ -4,6 +4,15 @@ import JobCard from '../components/JobCard';
 
 const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, todaySales, todayExpenses, todayPurchases, todayCashPurchases, todayPartsCost, todayVendorPayments, todayNetProfit, totalCollected, vendorPayable, today, setScreen, fetchAll, onMarkDelivered, onCollectBalance, onMarkReturned, onEditJob, onDeleteJob, onCollectAdvance, filteredTx, filterDateFrom, filterDateTo, setFilterDateFrom, setFilterDateTo, openingCash, saveOpeningCash, dashDate, setDashDate, getDayData }) => {
   const [showBillWise, setShowBillWise] = React.useState(false);
+  const [dayData, setDayData] = React.useState(null);
+
+  React.useEffect(() => {
+    if (dashDate !== today) {
+      getDayData(dashDate).then(d => setDayData(d));
+    } else {
+      setDayData(null);
+    }
+  }, [dashDate]);
   const [billWiseDate, setBillWiseDate] = React.useState(today);
   const [showRecentJobs, setShowRecentJobs] = React.useState(false);
   const [showTransactions, setShowTransactions] = React.useState(false);
@@ -46,7 +55,7 @@ const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, t
             cashPurchases: todayCashPurchases, purchases: todayPurchases,
             partsCost: todayPartsCost, vendorPayments: todayVendorPayments,
             expenses: todayExpenses, netProfit: todayNetProfit, opening: openingCash
-          } : getDayData(dashDate);
+          } : (dayData || { collected:0, advances:0, sales:0, cashPurchases:0, purchases:0, partsCost:0, vendorPayments:0, expenses:0, netProfit:0, opening:0 });
           return (
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>

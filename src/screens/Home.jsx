@@ -37,18 +37,26 @@ const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, t
             )}
           </div>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <div style={{ fontSize: 13, color: '#555' }}>Opening Cash</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: 'bold', color: '#1a73e8' }}>Rs.{openingCash}</div>
-            <button onClick={() => {
-              const amount = prompt('Enter opening cash balance for today:');
-              if (amount !== null) saveOpeningCash(Number(amount) || 0);
-            }} style={{ background: '#e8f1fd', color: '#1a73e8', border: '1px solid #1a73e8', borderRadius: 6, padding: '3px 8px', fontSize: 11, cursor: 'pointer' }}>
-              Edit
-            </button>
+        {dashDate === today && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <div style={{ fontSize: 13, color: '#555' }}>Opening Cash</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ fontSize: 13, fontWeight: 'bold', color: '#1a73e8' }}>Rs.{openingCash}</div>
+              <button onClick={() => {
+                const amount = prompt('Enter opening cash balance for today:');
+                if (amount !== null) saveOpeningCash(Number(amount) || 0);
+              }} style={{ background: '#e8f1fd', color: '#1a73e8', border: '1px solid #1a73e8', borderRadius: 6, padding: '3px 8px', fontSize: 11, cursor: 'pointer' }}>
+                Edit
+              </button>
+            </div>
           </div>
-        </div>
+        )}
+        {dashDate !== today && d.opening > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <div style={{ fontSize: 13, color: '#555' }}>Opening Cash</div>
+            <div style={{ fontSize: 13, fontWeight: 'bold', color: '#1a73e8' }}>Rs.{d.opening}</div>
+          </div>
+        )}
         {(() => {
           const d = dashDate === today ? {
             collected: todayCollected, advances: todayAdvances, sales: todaySales,

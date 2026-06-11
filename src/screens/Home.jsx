@@ -12,17 +12,17 @@ const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, t
 
       {/* TODAY SUMMARY */}
       <div style={{ background: 'white', borderRadius: 12, padding: 16, marginBottom: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <div style={{ fontSize: 14, fontWeight: 'bold', color: '#333' }}>
-            {dashDate === today ? 'Today Summary' : 'Summary — ' + dashDate}
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 8 }}>
+            {dashDate === today ? 'Today Summary' : 'Summary'}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <input type='date' value={dashDate} max={today}
               onChange={e => { if(e.target.value) setDashDate(e.target.value); }}
-              style={{ border: '1px solid #1a73e8', borderRadius: 6, padding: '4px 8px', fontSize: 13, color: '#1a73e8', background: dashDate !== today ? '#fff8e1' : 'white', fontWeight: 'bold', minWidth: 130 }} />
+              style={{ flex: 1, border: '1px solid #1a73e8', borderRadius: 8, padding: '8px 10px', fontSize: 14, color: '#1a73e8', background: dashDate !== today ? '#fff8e1' : 'white', fontWeight: 'bold' }} />
             {dashDate !== today && (
               <button onClick={() => setDashDate(today)}
-                style={{ fontSize: 12, background: '#1a73e8', color: 'white', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                style={{ fontSize: 13, background: '#1a73e8', color: 'white', border: 'none', borderRadius: 8, padding: '8px 14px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                 Today
               </button>
             )}

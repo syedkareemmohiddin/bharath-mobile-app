@@ -89,6 +89,36 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
         )}
       </div>
 
+      {/* EXISTING PARTS — Edit mode mein dikhega */}
+      {form.editId && selectedParts.filter(p => p.isExisting).length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 'bold', color: '#333', marginBottom: 8 }}>Current Parts (Edit/Delete)</div>
+          {selectedParts.filter(p => p.isExisting).map((part, i) => (
+            <div key={i} style={{ background: '#e8f5e9', borderRadius: 8, padding: 10, marginBottom: 8, border: '1px solid #a5d6a7' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <div style={{ fontSize: 13, fontWeight: 'bold', color: '#2e7d32' }}>{part.item_name}</div>
+                <button onClick={() => setSelectedParts(selectedParts.filter((_, idx) => idx !== i))}
+                  style={{ background: '#c62828', color: 'white', border: 'none', borderRadius: 4, padding: '2px 8px', fontSize: 11, cursor: 'pointer' }}>
+                  Delete
+                </button>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <div style={{ fontSize: 12, color: '#555' }}>Qty:</div>
+                <button onClick={() => {
+                  if (part.quantity <= 1) return;
+                  setSelectedParts(selectedParts.map((p, idx) => idx === i ? { ...p, quantity: p.quantity - 1 } : p));
+                }} style={{ width: 24, height: 24, borderRadius: 12, border: 'none', background: '#c62828', color: 'white', fontSize: 14, cursor: 'pointer' }}>-</button>
+                <span style={{ fontWeight: 'bold', minWidth: 20, textAlign: 'center' }}>{part.quantity}</span>
+                <button onClick={() => {
+                  setSelectedParts(selectedParts.map((p, idx) => idx === i ? { ...p, quantity: p.quantity + 1 } : p));
+                }} style={{ width: 24, height: 24, borderRadius: 12, border: 'none', background: '#2e7d32', color: 'white', fontSize: 14, cursor: 'pointer' }}>+</button>
+                <div style={{ fontSize: 12, color: '#555', marginLeft: 8 }}>Rs.{part.rate} x {part.quantity} = Rs.{part.rate * part.quantity}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* USE FROM EXISTING STOCK */}
       <div style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 13, fontWeight: 'bold', color: '#333', marginBottom: 8 }}>Use from Stock (optional)</div>

@@ -168,6 +168,7 @@ function App() {
         balance: Number(form.price) - (Number(form.advancePayment) || 0),
         status: Number(form.advancePayment) > 0 ? 'Partial' : 'Pending',
       }).eq('id', form.editId));
+      await supabase.from('job_parts').delete().eq('job_id', jobId);
     } else {
       jobId = 'BMS-' + Date.now().toString().slice(-4);
       ({ error } = await supabase.from('jobs').insert([{
@@ -235,6 +236,11 @@ function App() {
   };
 
   const editJob = (job) => {
+    const existingParts = jobParts.filter(p => p.job_id === job.job_id);
+    setSelectedParts(existingParts.map(p => ({
+      item_name: p.item_name, quantity: p.quantity, rate: p.rate, id: p.id, isExisting: true
+    })));
+    setNewParts([]);
     setForm({
       customerName: job.customer_name || '', phone: job.phone || '',
       deviceModel: job.device_model || '', complaint: job.complaint || '',

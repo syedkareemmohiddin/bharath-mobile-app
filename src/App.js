@@ -494,7 +494,9 @@ function App() {
   }).reduce((s, vp) => s + Number(vp.amount || 0), 0);
   const totalCollected = jobs.filter(j => j.status === 'Delivered' || j.status === 'Partial').reduce((s, j) => s + Number(j.amount_paid || 0), 0);
   const vendorPayable = vendors.reduce((s, v) => s + Number(v.balance || 0), 0);
-  const cashInHand = openingCash + todayCollected + todayAdvances + todaySales - todayExpenses - todayCashPurchases - todayVendorPayments;
+  const totalBankDeposits = bankTransactions.filter(bt => bt.transaction_type === 'Deposit').reduce((s, bt) => s + Number(bt.amount || 0), 0);
+  const totalBankWithdrawals = bankTransactions.filter(bt => bt.transaction_type === 'Withdraw').reduce((s, bt) => s + Number(bt.amount || 0), 0);
+  const cashInHand = openingCash + todayCollected + todayAdvances + todaySales - todayExpenses - todayCashPurchases - todayVendorPayments - totalBankDeposits + totalBankWithdrawals;
 
   const filteredTx = [
     ...jobs.map(j => ({

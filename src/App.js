@@ -497,6 +497,7 @@ function App() {
   const totalBankDeposits = bankTransactions.filter(bt => bt.transaction_type === 'Deposit').reduce((s, bt) => s + Number(bt.amount || 0), 0);
   const totalBankWithdrawals = bankTransactions.filter(bt => bt.transaction_type === 'Withdraw').reduce((s, bt) => s + Number(bt.amount || 0), 0);
   const cashInHand = openingCash + todayCollected + todayAdvances + todaySales - todayExpenses - todayCashPurchases - todayVendorPayments - totalBankDeposits + totalBankWithdrawals;
+  const closingCash = cashInHand;
 
   const filteredTx = [
     ...jobs.map(j => ({
@@ -654,6 +655,7 @@ function App() {
           bankTransactions={bankTransactions}
           fetchAll={fetchAll}
           cashInHand={cashInHand}
+          closingCash={closingCash}
         />
       )}
     </div>

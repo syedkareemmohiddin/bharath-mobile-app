@@ -582,6 +582,7 @@ function App() {
           setFilterDateFrom={setFilterDateFrom} setFilterDateTo={setFilterDateTo}
           openingCash={openingCash} saveOpeningCash={saveOpeningCash}
           cashInHand={cashInHand}
+          closingCash={closingCash}
           dashDate={dashDate} setDashDate={setDashDate} getDayData={getDayData}
           {...commonJobProps}
         />

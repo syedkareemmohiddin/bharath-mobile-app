@@ -169,6 +169,7 @@ function App() {
         amount_paid: Number(form.advancePayment) || 0,
         balance: Number(form.price) - (Number(form.advancePayment) || 0),
         status: Number(form.advancePayment) > 0 ? 'Partial' : 'Pending',
+        created_at: form.jobDate ? new Date(form.jobDate).toISOString() : undefined,
       }).eq('id', form.editId));
       const { data: oldParts } = await supabase.from('job_parts').select('*').eq('job_id', jobId);
       if (oldParts && oldParts.length > 0) {

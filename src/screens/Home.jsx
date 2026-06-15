@@ -8,6 +8,7 @@ const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, t
   const [dayDataLoading, setDayDataLoading] = React.useState(false);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   React.useEffect(() => {
     if (dashDate !== today) {
       setDayDataLoading(true);

@@ -3,8 +3,10 @@ import JobCard from '../components/JobCard';
 
 const Jobs = ({ jobs, jobParts, filterDate, setFilterDate, onEditJob, onDeleteJob, onMarkDelivered, onCollectBalance, onMarkReturned, onCollectAdvance }) => {
   const [search, setSearch] = React.useState('');
+  const istOffset = 5.5 * 60 * 60000;
   const filtered = jobs.filter(j => {
-    const dateMatch = filterDate ? (j.created_at && j.created_at.startsWith(filterDate)) : true;
+    const jobDate = j.created_at ? new Date(new Date(j.created_at).getTime() + istOffset).toISOString().split('T')[0] : null;
+    const dateMatch = filterDate ? jobDate === filterDate : true;
     const searchMatch = search === '' ||
       (j.customer_name && j.customer_name.toLowerCase().includes(search.toLowerCase())) ||
       (j.device_model && j.device_model.toLowerCase().includes(search.toLowerCase())) ||

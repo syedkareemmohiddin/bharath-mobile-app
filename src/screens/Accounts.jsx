@@ -462,7 +462,7 @@ const Accounts = ({ jobs, purchases, sales, expenses, jobParts, vendors, vendorP
             <div style={{ fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 12 }}>📒 Passbook (All Entries)</div>
 
             {/* Opening Entry */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #f0f0f0', background: '#e8f1fd', borderRadius: 6, padding: '8px 10px', marginBottom: 4 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f0f0f0', background: '#e8f1fd', borderRadius: 6, padding: '8px 10px', marginBottom: 4 }}>
               <div style={{ flex: 2 }}>
                 <div style={{ fontSize: 12, fontWeight: 'bold', color: '#1a73e8' }}>Opening Balance</div>
               </div>

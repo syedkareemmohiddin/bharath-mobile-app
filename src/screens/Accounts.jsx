@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { fmtDate } from '../utils/format';
 
 const Accounts = ({ jobs, purchases, sales, expenses, jobParts, vendors, vendorPayments, bankTransactions, openingCash }) => {
+  
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [view, setView] = useState('daily');
+  const [cashMonth, setCashMonth] = useState(new Date(new Date().getTime() + 5.5 * 60 * 60000).toISOString().slice(0, 7));
 
   const istOffset = 5.5 * 60 * 60000;
 
@@ -348,8 +350,8 @@ const Accounts = ({ jobs, purchases, sales, expenses, jobParts, vendors, vendorP
       const istOff = 5.5 * 60 * 60000;
       const toIST = (ts) => ts ? new Date(new Date(ts).getTime() + istOff).toISOString().split('T')[0] : null;
       const toISTTime = (ts) => ts ? new Date(new Date(ts).getTime() + istOff).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '';
-      const currentMonth = new Date(new Date().getTime() + istOff).toISOString().slice(0, 7);
-      const [cashMonth, setCashMonth] = React.useState(currentMonth);
+      
+      
 
       // Build all cash entries
       const allEntries = [

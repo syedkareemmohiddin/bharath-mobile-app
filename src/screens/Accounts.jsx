@@ -348,6 +348,8 @@ const Accounts = ({ jobs, purchases, sales, expenses, jobParts, vendors, vendorP
       const istOff = 5.5 * 60 * 60000;
       const toIST = (ts) => ts ? new Date(new Date(ts).getTime() + istOff).toISOString().split('T')[0] : null;
       const toISTTime = (ts) => ts ? new Date(new Date(ts).getTime() + istOff).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '';
+      const currentMonth = new Date(new Date().getTime() + istOff).toISOString().slice(0, 7);
+      const [cashMonth, setCashMonth] = React.useState(currentMonth);
 
       // Build all cash entries
       const allEntries = [
@@ -431,7 +433,7 @@ const Accounts = ({ jobs, purchases, sales, expenses, jobParts, vendors, vendorP
           type: 'Bank In',
           color: '#00838f',
         })),
-      ].filter(e => e.date).sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+      ].filter(e => e.date && e.date.startsWith(cashMonth)).sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
 
       // Running balance
       let balance = openingCash || 0;
@@ -459,7 +461,9 @@ const Accounts = ({ jobs, purchases, sales, expenses, jobParts, vendors, vendorP
 
           {/* Passbook */}
           <div style={{ background: 'white', borderRadius: 12, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
-            <div style={{ fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 12 }}>📒 Passbook (All Entries)</div>
+            <div style={{ fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 8 }}>📒 Passbook</div>
+            <input type='month' value={cashMonth} onChange={e => setCashMonth(e.target.value)}
+              style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 14, boxSizing: 'border-box', marginBottom: 12 }} />
 
             {/* Opening Entry */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f0f0f0', background: '#e8f1fd', borderRadius: 6, padding: '8px 10px', marginBottom: 4 }}>

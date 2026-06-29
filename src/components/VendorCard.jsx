@@ -5,6 +5,11 @@ import { fmtDateTime } from '../utils/format';
 const VendorCard = ({ v, purchases, vendorPayments, vendors, fetchAll }) => {
   const vPurchases = purchases.filter(p => p.vendor_name === v.name);
   const vPayments = vendorPayments.filter(vp => vp.vendor_name === v.name);
+
+  // Calculate balance from actual transactions (not from DB)
+  const calculatedBalance = 
+    vPurchases.filter(p => p.payment_type === 'Credit').reduce((s, p) => s + Number(p.total || 0), 0) -
+    vPayments.reduce((s, vp) => s + Number(vp.amount || 0), 0);
   const history = [
     ...vPurchases.map(p => ({
       date: p.created_at, title: p.item_name,
@@ -26,22 +31,20 @@ const VendorCard = ({ v, purchases, vendorPayments, vendors, fetchAll }) => {
           <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>📞 {v.phone}</div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontWeight: 'bold', fontSize: 16, color: v.balance > 0 ? '#c62828' : v.balance < 0 ? '#2e7d32' : '#888' }}>
-            {v.balance < 0 ? '-Rs.' + Math.abs(v.balance) : 'Rs.' + v.balance}
+          <div style={{ fontWeight: 'bold', fontSize: 16, color: calculatedBalance > 0 ? '#c62828' : calculatedBalance < 0 ? '#2e7d32' : '#888' }}>
+            {calculatedBalance < 0 ? '-Rs.' + Math.abs(calculatedBalance) : 'Rs.' + calculatedBalance}
           </div>
-          <div style={{ fontSize: 11, color: v.balance > 0 ? '#c62828' : v.balance < 0 ? '#2e7d32' : '#888' }}>
-            {v.balance > 0 ? 'Payable' : v.balance < 0 ? 'Receivable' : 'Clear'}
+          <div style={{ fontSize: 11, color: calculatedBalance > 0 ? '#c62828' : calculatedBalance < 0 ? '#2e7d32' : '#888' }}>
+            {calculatedBalance > 0 ? 'Payable' : calculatedBalance < 0 ? 'Receivable' : 'Clear'}
           </div>
         </div>
       </div>
 
-      {v.balance !== 0 && (
+      {calculatedBalance !== 0 && (
         <button onClick={async () => {
-          const paid = prompt('Pay to ' + v.name + '\nCurrent balance: Rs.' + v.balance + '\nEnter amount paying:');
+          const paid = prompt('Pay to ' + v.name + '\nCurrent balance: Rs.' + calculatedBalance + '\nEnter amount paying:');
           if (paid === null) return;
           const amount = Number(paid) || 0;
-          const newBalance = v.balance - amount;
-          await supabase.from('vendors').update({ balance: newBalance }).eq('id', v.id);
           await supabase.from('vendor_payments').insert([{ vendor_id: v.id, vendor_name: v.name, amount: amount }]);
           fetchAll();
         }}

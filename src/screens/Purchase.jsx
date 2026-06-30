@@ -11,10 +11,7 @@ const Purchase = ({ vendors, purchases, vendorPayments, purchaseForm, setPurchas
     return vPurchases - vPayments;
   };
 
-  const getVendorBalance = (vendorName) => {
-    const vPurchases = purchases.filter(p => p.vendor_name === vendorName && p.payment_type === 'Credit').reduce((s, p) => s + Number(p.total || 0), 0);
-    return vPurchases;
-  };
+  
 
   const saveEdit = async () => {
     if (!editItem.item_name || !editItem.quantity || !editItem.rate) {

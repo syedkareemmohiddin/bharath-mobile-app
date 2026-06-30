@@ -39,7 +39,7 @@ const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, t
   const fmtRs = (n) => 'Rs.' + Number(n || 0).toLocaleString('en-IN');
 
   return (
-    <div style={{ background: '#0f172a', minHeight: '100vh', padding: '0 0 32px 0' }}>
+    <div style={{ background: '#0f172a', minHeight: '100vh', padding: '0 0 90px 0' }}>
 
       {/* HERO HEADER */}
       <div style={{
@@ -308,6 +308,18 @@ const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, t
           )}
         </div>
 
+      </div>
+
+      {/* STICKY QUICK ACTIONS */}
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, maxWidth: 480, margin: '0 auto', display: 'flex', gap: 8, padding: 12, background: '#0f172a', borderTop: '1px solid rgba(255,255,255,0.1)', zIndex: 100 }}>
+        <button onClick={() => { fetchAll(); setScreen('newjob'); }}
+          style={{ flex: 1, background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', color: 'white', border: 'none', borderRadius: 12, padding: '14px 12px', fontSize: 14, fontWeight: '700', cursor: 'pointer' }}>
+          🔧 New Repair Job
+        </button>
+        <button onClick={() => { fetchAll(); setScreen('sale'); }}
+          style={{ flex: 1, background: 'linear-gradient(135deg, #16a34a, #15803d)', color: 'white', border: 'none', borderRadius: 12, padding: '14px 12px', fontSize: 14, fontWeight: '700', cursor: 'pointer' }}>
+          🛍 Accessories Sale
+        </button>
       </div>
     </div>
   );

@@ -4,9 +4,9 @@ import { fmtDateTime } from '../utils/format';
 
 const VendorCard = ({ v, purchases, vendorPayments, vendors, fetchAll }) => {
   const [showPassbook, setShowPassbook] = React.useState(false);
-  const [passbookMonth, setPassbookMonth] = React.useState(
-    new Date(new Date().getTime() + 5.5 * 60 * 60000).toISOString().slice(0, 7)
-  );
+  const istNow = new Date(new Date().getTime() + 5.5 * 60 * 60000).toISOString().split('T')[0];
+  const [pbFrom, setPbFrom] = React.useState(istNow);
+  const [pbTo, setPbTo] = React.useState(istNow);
 
   const vPurchases = purchases.filter(p => p.vendor_name === v.name);
   const vPayments = vendorPayments.filter(vp => vp.vendor_name === v.name);
@@ -54,7 +54,7 @@ const VendorCard = ({ v, purchases, vendorPayments, vendors, fetchAll }) => {
       color: '#2e7d32',
     })),
   ]
-    .filter(e => e.date && e.date.startsWith(passbookMonth))
+    .filter(e => e.date && e.date >= pbFrom && e.date <= pbTo)
     .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
 
   // Running balance for passbook
@@ -67,7 +67,7 @@ const VendorCard = ({ v, purchases, vendorPayments, vendors, fetchAll }) => {
       date: toIST(vp.created_at),
       in: Number(vp.amount || 0), out: 0,
     })),
-  ].filter(e => e.date && e.date < (passbookMonth + '-01')).sort((a, b) => a.date.localeCompare(b.date));
+  ].filter(e => e.date && e.date < pbFrom).sort((a, b) => a.date.localeCompare(b.date));
 
   const openingBalance = allSorted.reduce((s, e) => s + e.out - e.in, 0);
 
@@ -141,9 +141,19 @@ const VendorCard = ({ v, purchases, vendorPayments, vendors, fetchAll }) => {
       {/* PASSBOOK */}
       {showPassbook && (
         <div style={{ marginTop: 14, borderTop: '1px solid #eee', paddingTop: 12 }}>
-          {/* Month Picker */}
-          <input type='month' value={passbookMonth} onChange={e => setPassbookMonth(e.target.value)}
-            style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #1a73e8', fontSize: 14, color: '#1a73e8', boxSizing: 'border-box', marginBottom: 12 }} />
+          {/* Date From - To */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 11, color: '#555', marginBottom: 4 }}>From</div>
+              <input type='date' value={pbFrom} onChange={e => setPbFrom(e.target.value)}
+                style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #1a73e8', fontSize: 13, color: '#1a73e8', boxSizing: 'border-box' }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 11, color: '#555', marginBottom: 4 }}>To</div>
+              <input type='date' value={pbTo} onChange={e => setPbTo(e.target.value)}
+                style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #1a73e8', fontSize: 13, color: '#1a73e8', boxSizing: 'border-box' }} />
+            </div>
+          </div>
 
           {/* Summary */}
           <div style={{ background: '#f9f9f9', borderRadius: 8, padding: '10px 12px', marginBottom: 10 }}>

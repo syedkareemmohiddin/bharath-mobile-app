@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { supabase } from '../supabase';
 import { fmtDateTime } from '../utils/format';
 
-const Expense = ({ expenses, expenseForm, setExpenseForm, saveExpense, fetchAll, cashInHand }) => {
+const Expense = ({ expenses, expenseForm, setExpenseForm, saveExpense, fetchAll, cashInHand, bankAccounts }) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const istOff = 5.5 * 60 * 60000;
   const [filterMonth, setFilterMonth] = useState(new Date(new Date().getTime() + istOff).toISOString().slice(0, 7));
@@ -88,9 +88,9 @@ const Expense = ({ expenses, expenseForm, setExpenseForm, saveExpense, fetchAll,
             onChange={e => setExpenseForm({ ...expenseForm, accountName: e.target.value })}
             style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 15, boxSizing: 'border-box', background: 'white' }}>
             <option value=''>-- Select Account --</option>
-            <option value='akhterunnisa'>akhterunnisa</option>
-            <option value='Siraj'>Siraj</option>
-            <option value='Mummy'>Mummy</option>
+            {(bankAccounts || []).map(acc => (
+              <option key={acc.id} value={acc.account_name}>{acc.account_name} (Rs.{acc.balance})</option>
+            ))}
           </select>
         </div>
       )}

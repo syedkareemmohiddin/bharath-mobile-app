@@ -703,6 +703,7 @@ function App() {
         <Expense
           expenses={expenses} expenseForm={expenseForm} setExpenseForm={setExpenseForm}
           saveExpense={saveExpense} fetchAll={fetchAll} cashInHand={cashInHand}
+          bankAccounts={bankAccounts}
         />
       )}
       {screen === 'vendors' && (

@@ -654,6 +654,7 @@ function App() {
           todayExpenses={todayExpenses} todayPurchases={todayPurchases}
           todayCashPurchases={todayCashPurchases} todayPartsCost={todayPartsCost}
           todayVendorPayments={todayVendorPayments}
+          todayBankDeposits={todayBankDeposits} todayBankWithdrawals={todayBankWithdrawals}
           todayNetProfit={todayNetProfit}
           totalCollected={totalCollected} vendorPayable={vendorPayable}
           today={today} setScreen={setScreen} fetchAll={fetchAll}

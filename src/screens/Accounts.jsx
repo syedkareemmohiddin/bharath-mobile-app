@@ -5,7 +5,9 @@ const Accounts = ({ jobs, purchases, sales, expenses, jobParts, vendors, vendorP
   
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [view, setView] = useState('daily');
-  const [cashMonth, setCashMonth] = useState(new Date(new Date().getTime() + 5.5 * 60 * 60000).toISOString().slice(0, 7));
+  const todayIST = new Date(new Date().getTime() + 5.5 * 60 * 60000).toISOString().split('T')[0];
+  const [cashDateFrom, setCashDateFrom] = useState(todayIST);
+  const [cashDateTo, setCashDateTo] = useState(todayIST);
 
   const istOffset = 5.5 * 60 * 60000;
 
@@ -436,7 +438,7 @@ const Accounts = ({ jobs, purchases, sales, expenses, jobParts, vendors, vendorP
           type: 'Bank In',
           color: '#00838f',
         })),
-      ].filter(e => e.date && e.date.startsWith(cashMonth)).sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+      ].filter(e => e.date && e.date >= cashDateFrom && e.date <= cashDateTo).sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
 
       // Running balance
       let balance = openingCash || 0;
@@ -465,8 +467,24 @@ const Accounts = ({ jobs, purchases, sales, expenses, jobParts, vendors, vendorP
           {/* Passbook */}
           <div style={{ background: 'white', borderRadius: 12, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
             <div style={{ fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 8 }}>📒 Passbook</div>
-            <input type='month' value={cashMonth} onChange={e => setCashMonth(e.target.value)}
-              style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 14, boxSizing: 'border-box', marginBottom: 12 }} />
+
+            {/* Date Range Filter */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>From</div>
+                <input type='date' value={cashDateFrom} onChange={e => setCashDateFrom(e.target.value)}
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #ddd', fontSize: 13, boxSizing: 'border-box' }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>To</div>
+                <input type='date' value={cashDateTo} onChange={e => setCashDateTo(e.target.value)}
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #ddd', fontSize: 13, boxSizing: 'border-box' }} />
+              </div>
+            </div>
+            <button onClick={() => { setCashDateFrom(todayIST); setCashDateTo(todayIST); }}
+              style={{ width: '100%', background: '#e8f1fd', color: '#1a73e8', border: '1px solid #1a73e8', borderRadius: 8, padding: 8, fontSize: 12, fontWeight: 'bold', cursor: 'pointer', marginBottom: 12 }}>
+              📅 Today
+            </button>
 
             {/* Opening Entry */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f0f0f0', background: '#e8f1fd', borderRadius: 6, padding: '8px 10px', marginBottom: 4 }}>
@@ -487,7 +505,7 @@ const Accounts = ({ jobs, purchases, sales, expenses, jobParts, vendors, vendorP
             </div>
 
             {entriesWithBalance.length === 0 && (
-              <div style={{ textAlign: 'center', color: '#999', padding: 20 }}>No transactions yet</div>
+              <div style={{ textAlign: 'center', color: '#999', padding: 20 }}>No transactions in this range</div>
             )}
 
             {entriesWithBalance.map((e, i) => (

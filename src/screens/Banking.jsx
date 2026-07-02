@@ -77,7 +77,7 @@ const Banking = ({ bankAccounts, bankTransactions, fetchAll, cashInHand }) => {
         let newBalance = account.balance;
         if (tx.transaction_type === 'Deposit' || tx.transaction_type === 'Borrow') {
           newBalance = account.balance - tx.amount;
-        } else if (tx.transaction_type === 'Withdraw' || tx.transaction_type === 'Repay') {
+        } else if (tx.transaction_type === 'Withdraw' || tx.transaction_type === 'Repay' || tx.transaction_type === 'Expense') {
           newBalance = account.balance + tx.amount;
         }
         await supabase.from('bank_accounts').update({ balance: newBalance }).eq('id', account.id);
@@ -91,6 +91,7 @@ const Banking = ({ bankAccounts, bankTransactions, fetchAll, cashInHand }) => {
   const txColor = (type) => {
     if (type === 'Deposit' || type === 'Borrow') return '#2e7d32';
     if (type === 'Withdraw' || type === 'Repay') return '#c62828';
+    if (type === 'Expense') return '#e65100';
     return '#1a73e8';
   };
 

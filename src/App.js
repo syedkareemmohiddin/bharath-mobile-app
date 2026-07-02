@@ -491,7 +491,7 @@ function App() {
         await supabase.from('bank_transactions').insert([{
           account_id: account.id,
           account_name: account.account_name,
-          transaction_type: 'Withdraw',
+          transaction_type: 'Expense',
           amount: amount,
           description: 'Expense: ' + expenseForm.description,
           transaction_date: expDate.split('T')[0],

@@ -61,7 +61,7 @@ function App() {
     itemName: '', quantity: '', price: '', customerPhone: '', purchaseCost: '',
   });
   const [expenseForm, setExpenseForm] = useState({
-    description: '', amount: '', expenseDate: '',
+    description: '', amount: '', expenseDate: '', paymentSource: 'Cash', accountName: '',
   });
   const [newPartForm, setNewPartForm] = useState({
     vendorId: '', itemName: '', quantity: '1', rate: '', paymentType: 'Credit',
@@ -104,7 +104,7 @@ function App() {
         const ydCollected = j.data ? j.data.filter(job => (job.status === 'Delivered' || job.status === 'Partial') && job.delivery_date === yesterday).reduce((sum, job) => sum + Number(job.amount_paid || 0), 0) : 0;
         const ydAdvances = j.data ? j.data.filter(job => job.advance_date === yesterday).reduce((sum, job) => sum + Number(job.amount_paid || 0), 0) : 0;
         const ydSales = s.data ? s.data.filter(sale => sale.created_at && sale.created_at.startsWith(yesterday)).reduce((sum, sale) => sum + Number(sale.total || 0), 0) : 0;
-        const ydExpenses = e.data ? e.data.filter(exp => exp.created_at && exp.created_at.startsWith(yesterday)).reduce((sum, exp) => sum + Number(exp.amount || 0), 0) : 0;
+        const ydExpenses = e.data ? e.data.filter(exp => exp.created_at && exp.created_at.startsWith(yesterday) && exp.payment_source !== 'Bank').reduce((sum, exp) => sum + Number(exp.amount || 0), 0) : 0;
         const ydCashPurchases = p.data ? p.data.filter(pur => (pur.purchase_date || '').startsWith(yesterday) && pur.payment_type === 'Cash').reduce((sum, pur) => sum + Number(pur.total || 0), 0) : 0;
         const ydVendorPayments = vp.data ? vp.data.filter(payment => payment.created_at && payment.created_at.startsWith(yesterday)).reduce((sum, payment) => sum + Number(payment.amount || 0), 0) : 0;
         const ydBankDeposits = bt.data ? bt.data.filter(t => t.transaction_type === 'Deposit' && t.transaction_date === yesterday).reduce((s, t) => s + Number(t.amount || 0), 0) : 0;
@@ -135,7 +135,7 @@ function App() {
     const collected = jobs.filter(j => (j.status === 'Delivered' || j.status === 'Partial') && j.delivery_date === date).reduce((s, j) => s + Number(j.amount_paid || 0), 0);
     const advances = jobs.filter(j => j.advance_date === date).reduce((s, j) => s + Number(j.amount_paid || 0), 0);
     const daySales = sales.filter(s => s.created_at && toIST(s.created_at) === date).reduce((s, j) => s + Number(j.total || 0), 0);
-    const dayExpenses = expenses.filter(e => e.created_at && toIST(e.created_at) === date).reduce((s, e) => s + Number(e.amount || 0), 0);
+    const dayExpenses = expenses.filter(e => e.created_at && toIST(e.created_at) === date && e.payment_source !== 'Bank').reduce((s, e) => s + Number(e.amount || 0), 0);
     const dayPurchases = purchases.filter(p => (p.purchase_date || (p.created_at ? toIST(p.created_at) : null)) === date);
     const cashPurchases = dayPurchases.filter(p => p.payment_type === 'Cash').reduce((s, p) => s + Number(p.total || 0), 0);
     const totalPurchases = dayPurchases.reduce((s, p) => s + Number(p.total || 0), 0);
@@ -157,7 +157,7 @@ function App() {
         const prevCollected = jobs.filter(j => (j.status === 'Delivered' || j.status === 'Partial') && j.delivery_date === prevDateStr).reduce((s, j) => s + Number(j.amount_paid || 0), 0);
         const prevAdvances = jobs.filter(j => j.advance_date === prevDateStr).reduce((s, j) => s + Number(j.amount_paid || 0), 0);
         const prevSales = sales.filter(s => s.created_at && toIST(s.created_at) === prevDateStr).reduce((s, j) => s + Number(j.total || 0), 0);
-        const prevExpenses = expenses.filter(e => e.created_at && toIST(e.created_at) === prevDateStr).reduce((s, e) => s + Number(e.amount || 0), 0);
+        const prevExpenses = expenses.filter(e => e.created_at && toIST(e.created_at) === prevDateStr && e.payment_source !== 'Bank').reduce((s, e) => s + Number(e.amount || 0), 0);
         const prevCashPurchases = purchases.filter(p => p.payment_type === 'Cash' && (p.purchase_date || (p.created_at ? toIST(p.created_at) : null)) === prevDateStr).reduce((s, p) => s + Number(p.total || 0), 0);
         const prevVP = vendorPayments.filter(vp => vp.created_at && toIST(vp.created_at) === prevDateStr).reduce((s, vp) => s + Number(vp.amount || 0), 0);
         const prevBankDeposits = bankTransactions.filter(bt => bt.transaction_type === 'Deposit' && bt.transaction_date === prevDateStr).reduce((s, bt) => s + Number(bt.amount || 0), 0);
@@ -472,13 +472,18 @@ function App() {
     if (!expenseForm.description || !expenseForm.amount) {
       alert('Please fill description and amount'); return;
     }
+    if (expenseForm.paymentSource === 'Bank' && !expenseForm.accountName) {
+      alert('Please select a bank account'); return;
+    }
     const { error } = await supabase.from('expenses').insert([{
       description: expenseForm.description, amount: Number(expenseForm.amount),
+      payment_source: expenseForm.paymentSource || 'Cash',
+      account_name: expenseForm.paymentSource === 'Bank' ? expenseForm.accountName : null,
       created_at: expenseForm.expenseDate ? new Date(expenseForm.expenseDate).toISOString() : new Date().toISOString(),
     }]);
     if (!error) {
       alert('Expense saved!');
-      setExpenseForm({ description: '', amount: '', expenseDate: '' });
+      setExpenseForm({ description: '', amount: '', expenseDate: '', paymentSource: 'Cash', accountName: '' });
       fetchAll();
     }
   };
@@ -506,6 +511,7 @@ function App() {
 
   const todayExpenses = expenses.filter(e => {
     if (!e.created_at) return false;
+    if (e.payment_source === 'Bank') return false;
     const d = new Date(new Date(e.created_at).getTime() + istOffset);
     return d.toISOString().split('T')[0] === today;
   }).reduce((s, e) => s + Number(e.amount || 0), 0);

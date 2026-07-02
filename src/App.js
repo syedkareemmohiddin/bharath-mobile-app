@@ -475,17 +475,34 @@ function App() {
     if (expenseForm.paymentSource === 'Bank' && !expenseForm.accountName) {
       alert('Please select a bank account'); return;
     }
+    const amount = Number(expenseForm.amount);
+    const expDate = expenseForm.expenseDate ? new Date(expenseForm.expenseDate).toISOString() : new Date().toISOString();
     const { error } = await supabase.from('expenses').insert([{
-      description: expenseForm.description, amount: Number(expenseForm.amount),
+      description: expenseForm.description, amount: amount,
       payment_source: expenseForm.paymentSource || 'Cash',
       account_name: expenseForm.paymentSource === 'Bank' ? expenseForm.accountName : null,
-      created_at: expenseForm.expenseDate ? new Date(expenseForm.expenseDate).toISOString() : new Date().toISOString(),
+      created_at: expDate,
     }]);
-    if (!error) {
-      alert('Expense saved!');
-      setExpenseForm({ description: '', amount: '', expenseDate: '', paymentSource: 'Cash', accountName: '' });
-      fetchAll();
+    if (error) { alert('Error: ' + error.message); return; }
+
+    if (expenseForm.paymentSource === 'Bank') {
+      const account = bankAccounts.find(a => a.account_name === expenseForm.accountName);
+      if (account) {
+        await supabase.from('bank_transactions').insert([{
+          account_id: account.id,
+          account_name: account.account_name,
+          transaction_type: 'Withdraw',
+          amount: amount,
+          description: 'Expense: ' + expenseForm.description,
+          transaction_date: expDate.split('T')[0],
+        }]);
+        await supabase.from('bank_accounts').update({ balance: account.balance - amount }).eq('id', account.id);
+      }
     }
+
+    alert('Expense saved!');
+    setExpenseForm({ description: '', amount: '', expenseDate: '', paymentSource: 'Cash', accountName: '' });
+    fetchAll();
   };
 
   const now = new Date();

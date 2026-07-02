@@ -53,6 +53,48 @@ const Expense = ({ expenses, expenseForm, setExpenseForm, saveExpense, fetchAll,
           style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 15, boxSizing: 'border-box' }} />
       </div>
 
+      {/* PAYMENT SOURCE TOGGLE: CASH / BANK */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 13, color: '#555', marginBottom: 4 }}>Paid From *</div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button type='button'
+            onClick={() => setExpenseForm({ ...expenseForm, paymentSource: 'Cash', accountName: '' })}
+            style={{
+              flex: 1, padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd',
+              background: (expenseForm.paymentSource || 'Cash') === 'Cash' ? '#1a73e8' : 'white',
+              color: (expenseForm.paymentSource || 'Cash') === 'Cash' ? 'white' : '#555',
+              fontSize: 14, fontWeight: 'bold', cursor: 'pointer'
+            }}>
+            💵 Cash
+          </button>
+          <button type='button'
+            onClick={() => setExpenseForm({ ...expenseForm, paymentSource: 'Bank' })}
+            style={{
+              flex: 1, padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd',
+              background: expenseForm.paymentSource === 'Bank' ? '#1a73e8' : 'white',
+              color: expenseForm.paymentSource === 'Bank' ? 'white' : '#555',
+              fontSize: 14, fontWeight: 'bold', cursor: 'pointer'
+            }}>
+            🏦 Bank
+          </button>
+        </div>
+      </div>
+
+      {/* BANK ACCOUNT DROPDOWN - only when Bank selected */}
+      {expenseForm.paymentSource === 'Bank' && (
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 13, color: '#555', marginBottom: 4 }}>Select Bank Account *</div>
+          <select value={expenseForm.accountName || ''}
+            onChange={e => setExpenseForm({ ...expenseForm, accountName: e.target.value })}
+            style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 15, boxSizing: 'border-box', background: 'white' }}>
+            <option value=''>-- Select Account --</option>
+            <option value='akhterunnisa'>akhterunnisa</option>
+            <option value='Siraj'>Siraj</option>
+            <option value='Mummy'>Mummy</option>
+          </select>
+        </div>
+      )}
+
       <div style={{ marginBottom: 20 }}>
         <div style={{ fontSize: 13, color: '#555', marginBottom: 4 }}>Expense Date (optional — leave empty for today)</div>
         <input type='date' value={expenseForm.expenseDate || ''}
@@ -61,7 +103,13 @@ const Expense = ({ expenses, expenseForm, setExpenseForm, saveExpense, fetchAll,
       </div>
 
       <button onClick={saveExpense}
-        style={{ width: '100%', background: '#555', color: 'white', border: 'none', borderRadius: 12, padding: 16, fontSize: 16, fontWeight: 'bold', cursor: 'pointer' }}>
+        disabled={expenseForm.paymentSource === 'Bank' && !expenseForm.accountName}
+        style={{
+          width: '100%',
+          background: (expenseForm.paymentSource === 'Bank' && !expenseForm.accountName) ? '#ccc' : '#555',
+          color: 'white', border: 'none', borderRadius: 12, padding: 16, fontSize: 16, fontWeight: 'bold',
+          cursor: (expenseForm.paymentSource === 'Bank' && !expenseForm.accountName) ? 'not-allowed' : 'pointer'
+        }}>
         Save Expense
       </button>
 

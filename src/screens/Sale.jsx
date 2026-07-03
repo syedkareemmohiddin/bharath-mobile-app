@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { supabase } from '../supabase';
 import { fmtDateTime } from '../utils/format';
 
-const Sale = ({ sales, saleForm, setSaleForm, saveSale, fetchAll, stock, vendors, purchases }) => {
+const Sale = ({ sales, saleForm, setSaleForm, saveSale, fetchAll, stock, vendors, purchases, staff }) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [newPurchase, setNewPurchase] = useState({
     vendorId: '', itemName: '', quantity: '1', rate: '', paymentType: 'Credit',
@@ -23,6 +23,9 @@ const Sale = ({ sales, saleForm, setSaleForm, saveSale, fetchAll, stock, vendors
     if (!saleForm.itemName || !saleForm.quantity || !saleForm.price) {
       alert('Please fill item, quantity and price'); return;
     }
+    if (!saleForm.staffName) {
+      alert('Please select which staff member is making this sale'); return;
+    }
     const total = Number(saleForm.quantity) * Number(saleForm.price);
     if (Number(saleForm.quantity) <= 0 || Number(saleForm.price) <= 0) {
       alert('Quantity and price must be greater than 0'); return;
@@ -35,6 +38,7 @@ const Sale = ({ sales, saleForm, setSaleForm, saveSale, fetchAll, stock, vendors
       price: Number(saleForm.price), total: total,
       purchase_cost: autoPurchaseCost,
       customer_phone: saleForm.customerPhone,
+      staff_name: saleForm.staffName,
     }]);
     if (error) { alert('Error: ' + error.message); return; }
 
@@ -82,7 +86,7 @@ const Sale = ({ sales, saleForm, setSaleForm, saveSale, fetchAll, stock, vendors
     }
 
     alert('Sale saved! Rs.' + total);
-    setSaleForm({ itemName: '', quantity: '', price: '', customerPhone: '' });
+    setSaleForm({ itemName: '', quantity: '', price: '', customerPhone: '', staffName: '' });
     setNewPurchase({ vendorId: '', itemName: '', quantity: '1', rate: '', paymentType: 'Credit' });
     setShowPurchase(false);
     fetchAll();
@@ -91,6 +95,16 @@ const Sale = ({ sales, saleForm, setSaleForm, saveSale, fetchAll, stock, vendors
   return (
     <div style={{ padding: 20 }}>
       <div style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 16 }}>Accessories Sale</div>
+
+      {/* STAFF (mandatory) */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 13, color: '#555', marginBottom: 4 }}>Sold By (Staff) *</div>
+        <select value={saleForm.staffName || ''} onChange={e => setSaleForm({ ...saleForm, staffName: e.target.value })}
+          style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid ' + (saleForm.staffName ? '#ddd' : '#e65100'), fontSize: 15, boxSizing: 'border-box', background: 'white' }}>
+          <option value=''>-- Select Staff --</option>
+          {(staff || []).map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+        </select>
+      </div>
 
       {/* ITEM NAME WITH SUGGESTIONS */}
       <div style={{ marginBottom: 14, position: 'relative' }}>
@@ -248,6 +262,7 @@ const Sale = ({ sales, saleForm, setSaleForm, saveSale, fetchAll, stock, vendors
               Profit: Rs.{(Number(s.price) - Number(s.purchase_cost)) * Number(s.quantity)}
             </div>
           )}
+          {s.staff_name && <div style={{ fontSize: 11, color: '#7c3aed', marginTop: 2 }}>👤 Sold by: {s.staff_name}</div>}
           <div style={{ fontSize: 11, color: '#999', marginTop: 2 }}>📅 {fmtDateTime(s.created_at)}</div>
           <button onClick={async () => {
             if (window.confirm('Delete this sale?')) {

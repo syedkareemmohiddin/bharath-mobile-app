@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabase';
 
-const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedParts, setSelectedParts, newParts, setNewParts, newPartForm, setNewPartForm, fetchAll, jobs, purchases }) => {
+const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedParts, setSelectedParts, newParts, setNewParts, newPartForm, setNewPartForm, fetchAll, jobs, purchases, staff }) => {
 
   const [showReferredSuggestions, setShowReferredSuggestions] = useState(false);
 
@@ -64,6 +64,16 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
         style={{ width: '100%', background: '#fff3e0', color: '#e65100', border: '1px dashed #e65100', borderRadius: 10, padding: 10, fontSize: 13, fontWeight: 'bold', cursor: 'pointer', marginBottom: 16 }}>
         ⚡ No Details (Cash Sale / 0000)
       </button>
+
+      {/* STAFF (mandatory) */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 13, color: '#555', marginBottom: 4 }}>Booked By (Staff) *</div>
+        <select value={form.staffName || ''} onChange={e => setForm({ ...form, staffName: e.target.value })}
+          style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid ' + (form.staffName ? '#ddd' : '#e65100'), fontSize: 15, boxSizing: 'border-box', background: 'white' }}>
+          <option value=''>-- Select Staff --</option>
+          {(staff || []).map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+        </select>
+      </div>
 
       {/* BASIC FIELDS - PART 1 */}
       {[

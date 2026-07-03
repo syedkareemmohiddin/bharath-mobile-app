@@ -8,6 +8,7 @@ import Purchase from './screens/Purchase';
 import Sale from './screens/Sale';
 import Expense from './screens/Expense';
 import Customers from './screens/Customers';
+import Staff from './screens/Staff';
 import Vendors from './screens/Vendors';
 import Stock from './screens/Stock';
 import Accounts from './screens/Accounts';
@@ -40,6 +41,7 @@ function App() {
   const [jobParts, setJobParts] = useState([]);
   const [bankAccounts, setBankAccounts] = useState([]);
   const [bankTransactions, setBankTransactions] = useState([]);
+  const [staff, setStaff] = useState([]);
   const [selectedParts, setSelectedParts] = useState([]);
   const [newParts, setNewParts] = useState([]);
   const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
@@ -53,14 +55,14 @@ function App() {
     customerName: '', phone: '', deviceModel: '', complaint: '',
     price: '', deliveryDate: '', deliveryTime: '', advancePayment: '',
     jobDate: '', devicePassword: '', photoUrl: '', cashSale: false,
-    referredBy: '',
+    referredBy: '', staffName: '',
     editId: null, editJobId: null,
   });
   const [purchaseForm, setPurchaseForm] = useState({
     vendorId: '', itemName: '', quantity: '', rate: '', paymentType: 'Credit', purchaseDate: '',
   });
   const [saleForm, setSaleForm] = useState({
-    itemName: '', quantity: '', price: '', customerPhone: '', purchaseCost: '',
+    itemName: '', quantity: '', price: '', customerPhone: '', purchaseCost: '', staffName: '',
   });
   const [expenseForm, setExpenseForm] = useState({
     description: '', amount: '', expenseDate: '', paymentSource: 'Cash', accountName: '',
@@ -72,7 +74,7 @@ function App() {
   useEffect(() => { fetchAll(); }, []);
 
   const fetchAll = async () => {
-    const [j, v, p, s, e, vp, st, jp, ba, bt] = await Promise.all([
+    const [j, v, p, s, e, vp, st, jp, ba, bt, sf] = await Promise.all([
       supabase.from('jobs').select('*').order('id', { ascending: false }),
       supabase.from('vendors').select('*').order('name'),
       supabase.from('purchases').select('*').order('created_at', { ascending: false }),
@@ -83,6 +85,7 @@ function App() {
       supabase.from('job_parts').select('*'),
       supabase.from('bank_accounts').select('*').order('created_at'),
       supabase.from('bank_transactions').select('*').order('created_at', { ascending: false }),
+      supabase.from('staff').select('*').order('name'),
     ]);
     if (!j.error) setJobs(j.data);
     if (!v.error) setVendors(v.data);
@@ -94,6 +97,7 @@ function App() {
     if (!jp.error) setJobParts(jp.data);
     if (!ba.error) setBankAccounts(ba.data);
     if (!bt.error) setBankTransactions(bt.data);
+    if (!sf.error) setStaff(sf.data);
     const todayDate = new Date().toISOString().split('T')[0];
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
     const { data: dcData } = await supabase.from('daily_cash').select('*').eq('date', todayDate);
@@ -176,6 +180,9 @@ function App() {
     if (!form.phone || !form.complaint || !form.price) {
       alert('Please fill Phone, Complaint and Price'); return;
     }
+    if (!form.staffName) {
+      alert('Please select which staff member is booking this job'); return;
+    }
     setLoading(true);
     let error; let jobId;
     if (form.editId) {
@@ -190,6 +197,7 @@ function App() {
         status: Number(form.advancePayment) > 0 ? 'Partial' : 'Pending',
         created_at: form.jobDate ? new Date(form.jobDate).toISOString() : undefined,
         referred_by: form.referredBy || null,
+        staff_name: form.staffName,
       }).eq('id', form.editId));
       const { data: oldParts } = await supabase.from('job_parts').select('*').eq('job_id', jobId);
       if (oldParts && oldParts.length > 0) {
@@ -224,6 +232,7 @@ function App() {
         device_password: form.devicePassword || null,
         photo_url: form.photoUrl || null,
         referred_by: form.referredBy || null,
+        staff_name: form.staffName,
       }]));
     }
     if (error) { setLoading(false); alert('Error: ' + error.message); return; }
@@ -272,7 +281,7 @@ function App() {
       a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
-    setForm({ customerName: '', phone: '', deviceModel: '', complaint: '', price: '', deliveryDate: '', deliveryTime: '', advancePayment: '', jobDate: '', devicePassword: '', photoUrl: '', cashSale: false, referredBy: '', editId: null, editJobId: null });
+    setForm({ customerName: '', phone: '', deviceModel: '', complaint: '', price: '', deliveryDate: '', deliveryTime: '', advancePayment: '', jobDate: '', devicePassword: '', photoUrl: '', cashSale: false, referredBy: '', staffName: '', editId: null, editJobId: null });
     setSelectedParts([]); setNewParts([]);
     fetchAll(); setScreen('home');
   };
@@ -290,6 +299,7 @@ function App() {
       deliveryTime: job.delivery_time || '', advancePayment: job.amount_paid || '',
       jobDate: job.created_at ? job.created_at.split('T')[0] : '',
       referredBy: job.referred_by || '',
+      staffName: job.staff_name || '',
       editId: job.id, editJobId: job.job_id,
     });
     setScreen('newjob');
@@ -447,6 +457,9 @@ function App() {
     if (!saleForm.itemName || !saleForm.quantity || !saleForm.price) {
       alert('Please fill item, quantity and price'); return;
     }
+    if (!saleForm.staffName) {
+      alert('Please select which staff member is making this sale'); return;
+    }
     const total = Number(saleForm.quantity) * Number(saleForm.price);
     const saleId = 'SAL-' + Date.now().toString().slice(-4);
     const { error } = await supabase.from('sales').insert([{
@@ -455,6 +468,7 @@ function App() {
       price: Number(saleForm.price), total: total,
       purchase_cost: Number(saleForm.purchaseCost) || 0,
       customer_phone: saleForm.customerPhone,
+      staff_name: saleForm.staffName,
     }]);
     if (!error) {
       if (saleForm.customerPhone) {
@@ -468,7 +482,7 @@ function App() {
         }
       }
       alert('Sale saved! Rs.' + total);
-      setSaleForm({ itemName: '', quantity: '', price: '', customerPhone: '', purchaseCost: '' });
+      setSaleForm({ itemName: '', quantity: '', price: '', customerPhone: '', purchaseCost: '', staffName: '' });
       fetchAll();
     }
   };
@@ -681,7 +695,7 @@ function App() {
           selectedParts={selectedParts} setSelectedParts={setSelectedParts}
           newParts={newParts} setNewParts={setNewParts}
           newPartForm={newPartForm} setNewPartForm={setNewPartForm}
-          fetchAll={fetchAll}
+          fetchAll={fetchAll} staff={staff}
         />
       )}
       {screen === 'jobs' && (
@@ -702,7 +716,7 @@ function App() {
         <Sale
           sales={sales} saleForm={saleForm} setSaleForm={setSaleForm}
           saveSale={saveSale} fetchAll={fetchAll} stock={stock}
-          vendors={vendors} purchases={purchases}
+          vendors={vendors} purchases={purchases} staff={staff}
         />
       )}
       {screen === 'expense' && (
@@ -723,6 +737,9 @@ function App() {
       )}
       {screen === 'customers' && (
         <Customers jobs={jobs} jobParts={jobParts} />
+      )}
+      {screen === 'staff' && (
+        <Staff staff={staff} fetchAll={fetchAll} />
       )}
       {screen === 'pending' && (
         <Pending

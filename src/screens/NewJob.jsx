@@ -6,16 +6,16 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
   const [showReferredSuggestions, setShowReferredSuggestions] = useState(false);
 
   const handleChange = (e) => {
-  const { name, value } = e.target;
-  if (name === 'phone' && value.length >= 10 && !form.customerName) {
-    const existingJob = jobs.find(j => j.phone === value);
-    if (existingJob && existingJob.customer_name) {
-      setForm({ ...form, phone: value, customerName: existingJob.customer_name });
-      return;
+    const { name, value } = e.target;
+    if (name === 'phone' && value.length >= 10 && !form.customerName) {
+      const existingJob = jobs.find(j => j.phone === value);
+      if (existingJob && existingJob.customer_name) {
+        setForm({ ...form, phone: value, customerName: existingJob.customer_name });
+        return;
+      }
     }
-  }
-  setForm({ ...form, [name]: value });
-};
+    setForm({ ...form, [name]: value });
+  };
 
   const referredSuggestions = jobs ? [...new Map(
     jobs.filter(j => j.customer_name && j.customer_name.toLowerCase().includes((form.referredBy || '').toLowerCase()) && j.customer_name !== form.referredBy)
@@ -59,17 +59,10 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
     <div style={{ padding: 20 }}>
       <div style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 16 }}>{form.editId ? 'Edit Job' : 'New Repair Job'}</div>
 
-      {/* BASIC FIELDS */}
+      {/* BASIC FIELDS - PART 1 */}
       {[
         { label: 'Phone Number *', name: 'phone', placeholder: '9876543210', type: 'tel' },
         { label: 'Customer Name', name: 'customerName', placeholder: 'Enter name' },
-        { label: 'Device Model', name: 'deviceModel', placeholder: 'e.g. Realme C35' },
-        { label: 'Repair Price (Rs.) *', name: 'price', placeholder: '0', type: 'number' },
-        { label: 'Job Date (leave empty for today)', name: 'jobDate', type: 'date' },
-        { label: 'Delivery Date', name: 'deliveryDate', type: 'date' },
-        { label: 'Delivery Time (optional)', name: 'deliveryTime', type: 'time' },
-        { label: 'Advance Payment (optional)', name: 'advancePayment', placeholder: '0', type: 'number' },
-        { label: 'Device Password (optional)', name: 'devicePassword', placeholder: 'PIN or pattern', type: 'text' },
       ].map(field => (
         <div key={field.name} style={{ marginBottom: 14 }}>
           <div style={{ fontSize: 13, color: '#555', marginBottom: 4 }}>{field.label}</div>
@@ -81,7 +74,7 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
       {/* REFERRED BY */}
       <div style={{ marginBottom: 14, position: 'relative' }}>
         <div style={{ fontSize: 13, color: '#555', marginBottom: 4 }}>Referred By (optional)</div>
-        <input type='text' placeholder='e.g. existing customer name'
+        <input type='text' placeholder='Name or phone of existing customer'
           value={form.referredBy || ''}
           onChange={e => {
             const val = e.target.value;
@@ -111,6 +104,23 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
           </div>
         )}
       </div>
+
+      {/* BASIC FIELDS - PART 2 */}
+      {[
+        { label: 'Device Model', name: 'deviceModel', placeholder: 'e.g. Realme C35' },
+        { label: 'Repair Price (Rs.) *', name: 'price', placeholder: '0', type: 'number' },
+        { label: 'Job Date (leave empty for today)', name: 'jobDate', type: 'date' },
+        { label: 'Delivery Date', name: 'deliveryDate', type: 'date' },
+        { label: 'Delivery Time (optional)', name: 'deliveryTime', type: 'time' },
+        { label: 'Advance Payment (optional)', name: 'advancePayment', placeholder: '0', type: 'number' },
+        { label: 'Device Password (optional)', name: 'devicePassword', placeholder: 'PIN or pattern', type: 'text' },
+      ].map(field => (
+        <div key={field.name} style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 13, color: '#555', marginBottom: 4 }}>{field.label}</div>
+          <input name={field.name} type={field.type || 'text'} placeholder={field.placeholder} value={form[field.name] || ''} onChange={handleChange}
+            style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 15, boxSizing: 'border-box' }} />
+        </div>
+      ))}
 
       {/* CASH SALE TOGGLE */}
       <div style={{ marginBottom: 16, background: form.cashSale ? '#e8f5e9' : 'white', borderRadius: 10, padding: 12, border: '2px solid ' + (form.cashSale ? '#2e7d32' : '#ddd') }}>

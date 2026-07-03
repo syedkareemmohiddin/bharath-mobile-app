@@ -5,7 +5,17 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
 
   const [showReferredSuggestions, setShowReferredSuggestions] = useState(false);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+  const { name, value } = e.target;
+  if (name === 'phone' && value.length >= 10 && !form.customerName) {
+    const existingJob = jobs.find(j => j.phone === value);
+    if (existingJob && existingJob.customer_name) {
+      setForm({ ...form, phone: value, customerName: existingJob.customer_name });
+      return;
+    }
+  }
+  setForm({ ...form, [name]: value });
+};
 
   const referredSuggestions = jobs ? [...new Map(
     jobs.filter(j => j.customer_name && j.customer_name.toLowerCase().includes((form.referredBy || '').toLowerCase()) && j.customer_name !== form.referredBy)

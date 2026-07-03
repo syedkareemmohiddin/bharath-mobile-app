@@ -55,9 +55,17 @@ const Customers = ({ jobs, jobParts }) => {
         <div style={{ background: 'white', borderRadius: 12, padding: 16, marginBottom: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
           <div style={{ fontSize: 18, fontWeight: 'bold', color: '#333' }}>{selectedCustomer.name}</div>
           <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>📞 {selectedCustomer.phone}</div>
-          {selectedCustomer.referredBy && (
-            <div style={{ fontSize: 12, color: '#7c3aed', marginTop: 4 }}>👤 Referred by: {selectedCustomer.referredBy}</div>
-          )}
+          {selectedCustomer.referredBy && (() => {
+            const referrer = Object.values(customerMap).find(c => c.name === selectedCustomer.referredBy);
+            return referrer ? (
+              <div onClick={() => setSelectedPhone(referrer.phone)}
+                style={{ fontSize: 12, color: '#7c3aed', marginTop: 4, cursor: 'pointer', textDecoration: 'underline' }}>
+                👤 Referred by: {selectedCustomer.referredBy} →
+              </div>
+            ) : (
+              <div style={{ fontSize: 12, color: '#7c3aed', marginTop: 4 }}>👤 Referred by: {selectedCustomer.referredBy}</div>
+            );
+          })()}
           <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
             <div style={{ flex: 1, background: '#e8f5e9', borderRadius: 8, padding: '10px 12px' }}>
               <div style={{ fontSize: 11, color: '#2e7d32' }}>Total Spent</div>
@@ -119,7 +127,17 @@ const Customers = ({ jobs, jobParts }) => {
             <div style={{ fontSize: 14, fontWeight: 'bold', color: '#333' }}>{c.name}</div>
             <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>📞 {c.phone}</div>
             <div style={{ fontSize: 11, color: '#999', marginTop: 2 }}>{c.totalJobs} job{c.totalJobs !== 1 ? 's' : ''} {c.lastVisit ? '· Last: ' + fmtDate(c.lastVisit) : ''}</div>
-            {c.referredBy && <div style={{ fontSize: 11, color: '#7c3aed', marginTop: 2 }}>👤 Referred by {c.referredBy}</div>}
+            {c.referredBy && (() => {
+              const referrer = customers.find(x => x.name === c.referredBy) || Object.values(customerMap).find(x => x.name === c.referredBy);
+              return referrer ? (
+                <div onClick={(e) => { e.stopPropagation(); setSelectedPhone(referrer.phone); }}
+                  style={{ fontSize: 11, color: '#7c3aed', marginTop: 2, textDecoration: 'underline' }}>
+                  👤 Referred by {c.referredBy} →
+                </div>
+              ) : (
+                <div style={{ fontSize: 11, color: '#7c3aed', marginTop: 2 }}>👤 Referred by {c.referredBy}</div>
+              );
+            })()}
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: 16, fontWeight: 'bold', color: '#2e7d32' }}>Rs.{c.totalSpent}</div>

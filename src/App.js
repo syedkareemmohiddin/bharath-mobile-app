@@ -273,7 +273,7 @@ function App() {
     setLoading(false);
     const deliveryInfo = form.deliveryDate + (form.deliveryTime ? ' at ' + form.deliveryTime : '');
     const advanceInfo = Number(form.advancePayment) > 0 ? ' Advance paid: Rs.' + form.advancePayment + '. Balance to pay: Rs.' + (Number(form.price) - Number(form.advancePayment)) + '.' : '';
-    const message = 'Hello ' + form.customerName + '! Your ' + form.deviceModel + ' has been received at Bharath Mobile Service. Complaint: ' + form.complaint + '. Estimated price: Rs.' + form.price + '.' + advanceInfo + ' Expected delivery: ' + deliveryInfo + '. Job ID: ' + jobId + '. Thank you!';
+    const message = 'Hello ' + form.customerName + '! Your ' + form.deviceModel + ' has been received at indian mobiles. Complaint: ' + form.complaint + '. Estimated price: Rs.' + form.price + '.' + advanceInfo + ' Expected delivery: ' + deliveryInfo + '. Job ID: ' + jobId + '. Thank you!';
     const sendMsg = window.confirm('Send WhatsApp to ' + form.phone + '?');
     if (sendMsg) {
       const url = 'https://wa.me/91' + form.phone + '?text=' + encodeURIComponent(message);
@@ -322,8 +322,8 @@ function App() {
         setPaymentModal({ show: false });
         const bal = Number(price) - amountPaid;
         const message = bal > 0
-          ? 'Hello! Your device is ready at Bharath Mobile Service. Job ID: ' + jobId + '. Amount paid: Rs.' + amountPaid + '. Balance remaining: Rs.' + bal + '. Thank you!'
-          : 'Hello! Your device repair is complete at Bharath Mobile Service. Job ID: ' + jobId + '. Amount paid: Rs.' + amountPaid + '. Thank you!';
+          ? 'Hello! Your device is ready at indian mobiles. Job ID: ' + jobId + '. Amount paid: Rs.' + amountPaid + '. Balance remaining: Rs.' + bal + '. Thank you!'
+          : 'Hello! Your device repair is complete at indian mobiles. Job ID: ' + jobId + '. Amount paid: Rs.' + amountPaid + '. Thank you!';
         const sendMsg = window.confirm('Send WhatsApp message to ' + phone + '?');
         const { error } = await supabase.from('jobs').update({
           status: bal > 0 ? 'Partial' : 'Delivered',
@@ -358,7 +358,7 @@ function App() {
           advance_date: date,
         }).eq('job_id', jobId);
         if (!error) {
-          const message = 'Hello! Advance payment received at Bharath Mobile Service. Job ID: ' + jobId + '. Advance paid: Rs.' + amountPaid + '. Balance remaining: Rs.' + balance + '. Thank you!';
+          const message = 'Hello! Advance payment received at indian mobiles. Job ID: ' + jobId + '. Advance paid: Rs.' + amountPaid + '. Balance remaining: Rs.' + balance + '. Thank you!';
           const sendMsg = window.confirm('Send WhatsApp message to ' + phone + '?');
           if (sendMsg) {
             const url = 'https://wa.me/91' + phone + '?text=' + encodeURIComponent(message);
@@ -380,7 +380,7 @@ function App() {
       onConfirm: async (newPaid, date) => {
         setPaymentModal({ show: false });
         const newBal = Number(balance) - newPaid;
-        const message = 'Hello! Payment received at Bharath Mobile Service. Job ID: ' + jobId + '. Paid now: Rs.' + newPaid + (newBal > 0 ? '. Remaining: Rs.' + newBal : '. Full payment done!') + ' Thank you!';
+        const message = 'Hello! Payment received at indian mobiles. Job ID: ' + jobId + '. Paid now: Rs.' + newPaid + (newBal > 0 ? '. Remaining: Rs.' + newBal : '. Full payment done!') + ' Thank you!';
         const sendMsg = window.confirm('Send WhatsApp message to ' + phone + '?');
         const { error } = await supabase.from('jobs').update({
           status: newBal <= 0 ? 'Delivered' : 'Partial',
@@ -402,7 +402,7 @@ function App() {
 
   const markReturned = async (jobId, phone, deviceModel) => {
     if (window.confirm('Return ' + deviceModel + ' without repair?')) {
-      const message = 'Hello! Your ' + deviceModel + ' could not be repaired. Ready for collection at Bharath Mobile Service. Job ID: ' + jobId + '. Sorry for inconvenience. Thank you!';
+      const message = 'Hello! Your ' + deviceModel + ' could not be repaired. Ready for collection at indian mobiles. Job ID: ' + jobId + '. Sorry for inconvenience. Thank you!';
       const sendMsg = window.confirm('Send WhatsApp message to ' + phone + '?');
       const { error } = await supabase.from('jobs').update({ status: 'Returned' }).eq('job_id', jobId);
       if (!error) {
@@ -472,7 +472,7 @@ function App() {
     }]);
     if (!error) {
       if (saleForm.customerPhone) {
-        const message = 'Hello! Thank you for purchasing from Bharath Mobile Service. Item: ' + saleForm.itemName + ' x' + saleForm.quantity + '. Total: Rs.' + total + '. Thank you!';
+        const message = 'Hello! Thank you for purchasing from indian mobiles. Item: ' + saleForm.itemName + ' x' + saleForm.quantity + '. Total: Rs.' + total + '. Thank you!';
         const sendMsg = window.confirm('Send WhatsApp to ' + saleForm.customerPhone + '?');
         if (sendMsg) {
           const url = 'https://wa.me/91' + saleForm.customerPhone + '?text=' + encodeURIComponent(message);
@@ -654,7 +654,7 @@ function App() {
             <span style={{ fontSize: 20 }}>📱</span>
           </div>
           <div>
-            <div style={{ fontWeight: '900', fontSize: 18, letterSpacing: 1 }}>BHARATH MOBILES</div>
+            <div style={{ fontWeight: '900', fontSize: 18, letterSpacing: 1 }}>indian mobiles</div>
             <div style={{ fontSize: 11, opacity: 0.85, letterSpacing: 2 }}>REPAIR & SERVICE</div>
           </div>
         </div>

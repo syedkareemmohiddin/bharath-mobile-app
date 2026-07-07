@@ -425,6 +425,7 @@ const savePurchase = async () => {
     if (!purchaseForm.vendorId) { alert('Please select a vendor'); return; }
     if (!newPurchaseItems || newPurchaseItems.length === 0) { alert('Please add at least one item'); return; }
     const vendor = vendors.find(v => v.id === Number(purchaseForm.vendorId));
+  const nextBillId = purchases.length > 0 ? Math.max(...purchases.map(p => p.bill_id || 0)) + 1 : 1;
     let totalAll = 0;
     for (const item of newPurchaseItems) {
       const total = Number(item.quantity) * Number(item.rate);
@@ -433,6 +434,7 @@ const savePurchase = async () => {
         vendor_id: Number(purchaseForm.vendorId), vendor_name: vendor.name,
         item_name: item.itemName, quantity: Number(item.quantity),
         rate: Number(item.rate), total: total, payment_type: purchaseForm.paymentType,
+        bill_id: nextBillId,
         purchase_date: purchaseForm.purchaseDate || new Date().toISOString().split('T')[0],
       }]);
       if (error) { alert('Error: ' + error.message); return; }

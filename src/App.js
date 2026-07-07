@@ -61,6 +61,7 @@ function App() {
   const [purchaseForm, setPurchaseForm] = useState({
     vendorId: '', itemName: '', quantity: '', rate: '', paymentType: 'Credit', purchaseDate: '',
   });
+  const [newPurchaseItems, setNewPurchaseItems] = useState([]);
   const [saleForm, setSaleForm] = useState({
     itemName: '', quantity: '', price: '', customerPhone: '', purchaseCost: '', staffName: '',
   });

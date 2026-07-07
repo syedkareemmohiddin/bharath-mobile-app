@@ -183,6 +183,9 @@ function App() {
     if (!form.staffName) {
       alert('Please select which staff member is booking this job'); return;
     }
+    if (newPartForm.itemName && newPartForm.itemName.trim()) {
+      alert('You have entered a part but not added it. Please select a vendor and click "Add" for the part, or clear the part fields before saving.'); return;
+    }
     setLoading(true);
     let error; let jobId;
     if (form.editId) {

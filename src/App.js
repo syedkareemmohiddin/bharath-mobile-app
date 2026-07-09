@@ -179,14 +179,13 @@ function App() {
 
 const recalcCashChain = async (fromDateStr) => {
     if (!fromDateStr || fromDateStr >= today) return;
-    const [jFresh, sFresh, eFresh, pFresh, vpFresh, btFresh, jpFresh, dcFresh] = await Promise.all([
+    const [jFresh, sFresh, eFresh, pFresh, vpFresh, btFresh, dcFresh] = await Promise.all([
       supabase.from('jobs').select('*'),
       supabase.from('sales').select('*'),
       supabase.from('expenses').select('*'),
       supabase.from('purchases').select('*'),
       supabase.from('vendor_payments').select('*'),
       supabase.from('bank_transactions').select('*'),
-      supabase.from('job_parts').select('*'),
       supabase.from('daily_cash').select('*'),
     ]);
     const freshJobs = jFresh.data || [];
@@ -195,7 +194,7 @@ const recalcCashChain = async (fromDateStr) => {
     const freshPurchases = pFresh.data || [];
     const freshVP = vpFresh.data || [];
     const freshBT = btFresh.data || [];
-    const freshJobParts = jpFresh.data || [];
+    
     const freshDC = dcFresh.data || [];
 
     const getFreshDayData = (date) => {
@@ -222,8 +221,7 @@ const recalcCashChain = async (fromDateStr) => {
       const nextDate = new Date(current);
       nextDate.setDate(nextDate.getDate() + 1);
       const nextDateStr = nextDate.toISOString().split('T')[0];
-      const existingNext = freshDC.find(d => d.date === nextDateStr);
-      if (existingNext) {
+      const existingNext = freshDC.find(d => d.date === nextDateStr);      if (existingNext) {
         await supabase.from('daily_cash').update({ opening_balance: closing }).eq('date', nextDateStr);
         existingNext.opening_balance = closing;
       } else {

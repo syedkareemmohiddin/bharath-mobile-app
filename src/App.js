@@ -481,6 +481,10 @@ const savePurchase = async () => {
         }]);
       }
     }
+  const hasBackdatedCashPurchase = purchaseForm.paymentType === 'Cash' && purchaseForm.purchaseDate && purchaseForm.purchaseDate < today;
+    if (hasBackdatedCashPurchase) {
+      await recalcCashChain(purchaseForm.purchaseDate);
+    }
     alert('Purchase saved! ' + newPurchaseItems.length + ' item(s), Total: Rs.' + totalAll);
     setPurchaseForm({ vendorId: '', itemName: '', quantity: '', rate: '', paymentType: 'Credit', purchaseDate: '' });
     setNewPurchaseItems([]);

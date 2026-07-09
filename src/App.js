@@ -552,7 +552,9 @@ const savePurchase = async () => {
         await supabase.from('bank_accounts').update({ balance: account.balance - amount }).eq('id', account.id);
       }
     }
-
+if (expDate.split('T')[0] < today) {
+      await recalcCashChain(expDate.split('T')[0]);
+    }
     alert('Expense saved!');
     setExpenseForm({ description: '', amount: '', expenseDate: '', paymentSource: 'Cash', accountName: '' });
     fetchAll();

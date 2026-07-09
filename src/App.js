@@ -177,6 +177,29 @@ function App() {
     return { collected, advances, sales: daySales, cashPurchases, purchases: totalPurchases, partsCost, vendorPayments: dayVP, expenses: dayExpenses, netProfit, opening, bankDeposits: dayBankDeposits, bankWithdrawals: dayBankWithdrawals };
   };
 
+  const recalcCashChain = async (fromDateStr) => {
+    if (!fromDateStr) return;
+    let current = new Date(fromDateStr);
+    const end = new Date(today);
+    if (current >= end) return;
+    while (current < end) {
+      const dateStr = current.toISOString().split('T')[0];
+      const dayData = await getDayData(dateStr);
+      const closing = dayData.opening + dayData.collected + dayData.advances + dayData.sales - dayData.expenses - dayData.cashPurchases - dayData.vendorPayments - dayData.bankDeposits + dayData.bankWithdrawals;
+      const nextDate = new Date(current);
+      nextDate.setDate(nextDate.getDate() + 1);
+      const nextDateStr = nextDate.toISOString().split('T')[0];
+      const { data: existingNext } = await supabase.from('daily_cash').select('*').eq('date', nextDateStr);
+      if (existingNext && existingNext.length > 0) {
+        await supabase.from('daily_cash').update({ opening_balance: closing }).eq('date', nextDateStr);
+      } else {
+        await supabase.from('daily_cash').insert([{ date: nextDateStr, opening_balance: closing }]);
+      }
+      current = nextDate;
+    }
+    await fetchAll();
+  };
+
   const handleSave = async () => {
     if (!form.phone || !form.complaint || !form.price) {
       alert('Please fill Phone, Complaint and Price'); return;

@@ -59,7 +59,7 @@ function App() {
     editId: null, editJobId: null,
   });
   const [purchaseForm, setPurchaseForm] = useState({
-    vendorId: '', itemName: '', quantity: '', rate: '', paymentType: 'Credit', purchaseDate: '',
+    vendorId: '', itemName: '', quantity: '', rate: '', paymentType: 'Credit', purchaseDate: '', 
   });
   const [newPurchaseItems, setNewPurchaseItems] = useState([]);
   const [saleForm, setSaleForm] = useState({
@@ -176,6 +176,7 @@ function App() {
     const dayBankWithdrawals = bankTransactions.filter(bt => bt.transaction_type === 'Withdraw' && bt.transaction_date === date).reduce((s, bt) => s + Number(bt.amount || 0), 0);
     return { collected, advances, sales: daySales, cashPurchases, purchases: totalPurchases, partsCost, vendorPayments: dayVP, expenses: dayExpenses, netProfit, opening, bankDeposits: dayBankDeposits, bankWithdrawals: dayBankWithdrawals };
   };
+
   const recalcCashChain = async (fromDateStr) => {
     if (!fromDateStr || fromDateStr >= today) return;
     const [jFresh, sFresh, eFresh, pFresh, vpFresh, btFresh, dcFresh] = await Promise.all([
@@ -390,6 +391,7 @@ function App() {
           delivery_date: date,
         }).eq('job_id', jobId);
         if (!error) {
+          if (date < today) { await recalcCashChain(date); }
           if (sendMsg) {
             const url = 'https://wa.me/91' + phone + '?text=' + encodeURIComponent(message);
             const a = document.createElement('a');
@@ -417,6 +419,7 @@ function App() {
           advance_date: date,
         }).eq('job_id', jobId);
         if (!error) {
+          if (date < today) { await recalcCashChain(date); }
           const message = 'Hello! Advance payment received at indian mobiles. Job ID: ' + jobId + '. Advance paid: Rs.' + amountPaid + '. Balance remaining: Rs.' + balance + '. Thank you!';
           const sendMsg = window.confirm('Send WhatsApp message to ' + phone + '?');
           if (sendMsg) {
@@ -447,6 +450,7 @@ function App() {
           delivery_date: date,
         }).eq('job_id', jobId);
         if (!error) {
+          if (date < today) { await recalcCashChain(date); }
           if (sendMsg) {
             const url = 'https://wa.me/91' + phone + '?text=' + encodeURIComponent(message);
             const a = document.createElement('a');
@@ -457,9 +461,7 @@ function App() {
         }
       }
     });
-  };
-
-  const markReturned = async (jobId, phone, deviceModel) => {
+  };const markReturned = async (jobId, phone, deviceModel) => {
     if (window.confirm('Return ' + deviceModel + ' without repair?')) {
       const message = 'Hello! Your ' + deviceModel + ' could not be repaired. Ready for collection at indian mobiles. Job ID: ' + jobId + '. Sorry for inconvenience. Thank you!';
       const sendMsg = window.confirm('Send WhatsApp message to ' + phone + '?');
@@ -477,11 +479,11 @@ function App() {
   };
 
   const savePurchase = async () => {
-if (!purchaseForm.vendorId) { alert('Please select a vendor'); return; }
+    if (!purchaseForm.vendorId) { alert('Please select a vendor'); return; }
     if (!newPurchaseItems || newPurchaseItems.length === 0) { alert('Please add at least one item'); return; }
     const vendor = vendors.find(v => v.id === Number(purchaseForm.vendorId));
-    let totalAll = 0;
     const nextBillId = purchases.length > 0 ? Math.max(...purchases.map(p => p.bill_id || 0)) + 1 : 1;
+    let totalAll = 0;
     for (const item of newPurchaseItems) {
       const total = Number(item.quantity) * Number(item.rate);
       totalAll += total;
@@ -588,7 +590,7 @@ if (!purchaseForm.vendorId) { alert('Please select a vendor'); return; }
         await supabase.from('bank_accounts').update({ balance: account.balance - amount }).eq('id', account.id);
       }
     }
-if (expDate.split('T')[0] < today) {
+    if (expDate.split('T')[0] < today) {
       await recalcCashChain(expDate.split('T')[0]);
     }
     alert('Expense saved!');
@@ -778,7 +780,7 @@ if (expDate.split('T')[0] < today) {
         />
       )}
       {screen === 'purchase' && (
-       <Purchase
+        <Purchase
           vendors={vendors} purchases={purchases} vendorPayments={vendorPayments}
           purchaseForm={purchaseForm} setPurchaseForm={setPurchaseForm}
           newPurchaseItems={newPurchaseItems} setNewPurchaseItems={setNewPurchaseItems}
@@ -839,6 +841,8 @@ if (expDate.split('T')[0] < today) {
           fetchAll={fetchAll}
           cashInHand={cashInHand}
           closingCash={closingCash}
+          recalcCashChain={recalcCashChain}
+          today={today}
         />
       )}
     </div>

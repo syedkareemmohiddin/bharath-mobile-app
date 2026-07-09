@@ -804,12 +804,14 @@ if (expDate.split('T')[0] < today) {
         />
       )}
       {screen === 'banking' && (
-        <Banking
+      <Banking
           bankAccounts={bankAccounts}
           bankTransactions={bankTransactions}
           fetchAll={fetchAll}
           cashInHand={cashInHand}
           closingCash={closingCash}
+          recalcCashChain={recalcCashChain}
+          today={today}
         />
       )}
     </div>

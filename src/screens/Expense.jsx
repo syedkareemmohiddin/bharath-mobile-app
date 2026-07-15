@@ -5,7 +5,7 @@ import { fmtDateTime } from '../utils/format';
 const Expense = ({ expenses, expenseForm, setExpenseForm, saveExpense, fetchAll, cashInHand, bankAccounts }) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const istOff = 5.5 * 60 * 60000;
-  const [filterMonth, setFilterMonth] = useState(new Date(new Date().getTime() + istOff).toISOString().slice(0, 7));
+  const [filterDate, setFilterDate] = useState(new Date(new Date().getTime() + istOff).toISOString().slice(0, 10));
   const [filterCategory, setFilterCategory] = useState('');
 
   const suggestions = expenses ? [...new Set(
@@ -117,29 +117,24 @@ const Expense = ({ expenses, expenseForm, setExpenseForm, saveExpense, fetchAll,
       {(() => {
         const istOff = 5.5 * 60 * 60000;
         const toIST = (ts) => ts ? new Date(new Date(ts).getTime() + istOff).toISOString().split('T')[0] : null;
-        
-        // states upar move ho gayi
 
-        const monthExpenses = expenses.filter(e => {
-          const d = toIST(e.created_at);
-          return d && d.startsWith(filterMonth);
-        });
+        const dayExpenses = expenses.filter(e => toIST(e.created_at) === filterDate);
 
         const categories = [...new Set(expenses.map(e => e.description).filter(Boolean))].sort();
 
-        const filtered = monthExpenses.filter(e =>
+        const filtered = dayExpenses.filter(e =>
           filterCategory === '' || e.description === filterCategory
         );
 
         const totalFiltered = filtered.reduce((s, e) => s + Number(e.amount || 0), 0);
-        const totalMonth = monthExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+        const totalDay = dayExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
 
         return (
           <div style={{ marginTop: 24 }}>
             <div style={{ fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 10 }}>Expense History</div>
 
-            {/* Month Filter */}
-            <input type='month' value={filterMonth} onChange={e => { setFilterMonth(e.target.value); setFilterCategory(''); }}
+            {/* Date Filter */}
+            <input type='date' value={filterDate} onChange={e => { setFilterDate(e.target.value); setFilterCategory(''); }}
               style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 14, boxSizing: 'border-box', marginBottom: 10 }} />
 
             {/* Category Filter */}
@@ -149,7 +144,7 @@ const Expense = ({ expenses, expenseForm, setExpenseForm, saveExpense, fetchAll,
                 All
               </button>
               {categories.map((cat, i) => {
-                const catTotal = monthExpenses.filter(e => e.description === cat).reduce((s, e) => s + Number(e.amount || 0), 0);
+                const catTotal = dayExpenses.filter(e => e.description === cat).reduce((s, e) => s + Number(e.amount || 0), 0);
                 if (catTotal === 0) return null;
                 return (
                   <button key={i} onClick={() => setFilterCategory(filterCategory === cat ? '' : cat)}
@@ -163,10 +158,10 @@ const Expense = ({ expenses, expenseForm, setExpenseForm, saveExpense, fetchAll,
             {/* Summary */}
             <div style={{ background: '#fff3e0', borderRadius: 10, padding: '10px 14px', marginBottom: 12, display: 'flex', justifyContent: 'space-between' }}>
               <div style={{ fontSize: 13, color: '#e65100', fontWeight: 'bold' }}>
-                {filterCategory ? filterCategory : 'Total'} — {filterMonth}
+                {filterCategory ? filterCategory : 'Total'} — {filterDate}
               </div>
               <div style={{ fontSize: 14, fontWeight: 'bold', color: '#c62828' }}>
-                Rs.{filterCategory ? totalFiltered : totalMonth}
+                Rs.{filterCategory ? totalFiltered : totalDay}
               </div>
             </div>
 

@@ -31,7 +31,6 @@ const JobCard = ({ job, jobParts, onEdit, onDelete, onMarkDelivered, onCollectBa
         <div style={{ fontSize: 15, fontWeight: 'bold', color: '#1a73e8' }}>Rs.{job.price}</div>
       </div>
       <div style={{ fontSize: 12, color: '#999', marginTop: 2 }}>🚚 Delivery: {job.delivery_date} {job.delivery_time ? 'at ' + job.delivery_time : ''}</div>
-      </div>
 
       {job.photo_url && (
         <img src={job.photo_url} alt='Device' style={{ width: '100%', borderRadius: 8, maxHeight: 180, objectFit: 'cover', marginTop: 8 }} />

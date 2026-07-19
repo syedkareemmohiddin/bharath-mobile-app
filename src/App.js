@@ -1,4 +1,5 @@
 import Pending from './screens/Pending';
+import PaymentHistory from './screens/PaymentHistory';
 import React, { useState, useEffect } from 'react';
 import { supabase } from './supabase';
 import Home from './screens/Home';
@@ -40,6 +41,7 @@ function App() {
   const [stock, setStock] = useState([]);
   const [jobParts, setJobParts] = useState([]);
   const [jobPayments, setJobPayments] = useState([]);
+  const [selectedJobId, setSelectedJobId] = useState(null);
   const [bankAccounts, setBankAccounts] = useState([]);
   const [bankTransactions, setBankTransactions] = useState([]);
   const [staff, setStaff] = useState([]);
@@ -376,7 +378,10 @@ function App() {
     });
     setScreen('newjob');
   };
-
+const openPaymentHistory = (jobId) => {
+    setSelectedJobId(jobId);
+    setScreen('paymenthistory');
+  };
   const deleteJob = async (id, jobId) => {
     if (window.confirm('Delete job ' + jobId + '? This cannot be undone!')) {
       const { error } = await supabase.from('jobs').delete().eq('id', id);
@@ -752,6 +757,7 @@ function App() {
     onCollectBalance: collectBalance,
     onMarkReturned: markReturned,
     onCollectAdvance: collectAdvance,
+    onOpenPayments: openPaymentHistory,
   };
 
   return (
@@ -872,6 +878,13 @@ function App() {
           vendorPayments={vendorPayments}
           bankTransactions={bankTransactions}
           openingCash={openingCash}
+        />
+      )}
+      {screen === 'paymenthistory' && (
+        <PaymentHistory
+          jobId={selectedJobId} jobs={jobs} jobPayments={jobPayments}
+          fetchAll={fetchAll} setScreen={setScreen}
+          recalcCashChain={recalcCashChain} today={today}
         />
       )}
       {screen === 'banking' && (

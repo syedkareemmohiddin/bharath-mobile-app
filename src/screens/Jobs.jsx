@@ -1,7 +1,7 @@
 import React from 'react';
 import JobCard from '../components/JobCard';
 
-const Jobs = ({ jobs, jobParts, filterDate, setFilterDate, onEditJob, onDeleteJob, onMarkDelivered, onCollectBalance, onMarkReturned, onCollectAdvance }) => {
+const Jobs = ({ jobs, jobParts, filterDate, setFilterDate, onEditJob, onDeleteJob, onMarkDelivered, onCollectBalance, onMarkReturned, onCollectAdvance, onOpenPayments }) => {
   const [search, setSearch] = React.useState('');
   const istOffset = 5.5 * 60 * 60000;
   const filtered = jobs.filter(j => {
@@ -39,6 +39,7 @@ const Jobs = ({ jobs, jobParts, filterDate, setFilterDate, onEditJob, onDeleteJo
           onCollectBalance={onCollectBalance}
           onMarkReturned={onMarkReturned}
           onCollectAdvance={onCollectAdvance}
+          onOpenPayments={onOpenPayments}
         />
       ))}
     </div>

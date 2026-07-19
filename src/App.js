@@ -75,7 +75,7 @@ function App() {
   useEffect(() => { fetchAll(); }, []);
 
   const fetchAll = async () => {
-    const [j, v, p, s, e, vp, st, jp, ba, bt, sf] = await Promise.all([
+    const [j, v, p, s, e, vp, st, jp, ba, bt, sf, jpay] = await Promise.all([
       supabase.from('jobs').select('*').order('id', { ascending: false }),
       supabase.from('vendors').select('*').order('name'),
       supabase.from('purchases').select('*').order('created_at', { ascending: false }),
@@ -87,6 +87,7 @@ function App() {
       supabase.from('bank_accounts').select('*').order('created_at'),
       supabase.from('bank_transactions').select('*').order('created_at', { ascending: false }),
       supabase.from('staff').select('*').order('name'),
+      supabase.from('job_payments').select('*').order('created_at', { ascending: false }),
     ]);
     if (!j.error) setJobs(j.data);
     if (!v.error) setVendors(v.data);
@@ -99,6 +100,7 @@ function App() {
     if (!ba.error) setBankAccounts(ba.data);
     if (!bt.error) setBankTransactions(bt.data);
     if (!sf.error) setStaff(sf.data);
+    if (!jpay.error) setJobPayments(jpay.data);
     const todayDate = new Date().toISOString().split('T')[0];
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
     const { data: dcData } = await supabase.from('daily_cash').select('*').eq('date', todayDate);
@@ -247,14 +249,14 @@ function App() {
     let error; let jobId;
     if (form.editId) {
       jobId = form.editJobId;
+      const existingJob = jobs.find(j => j.id === form.editId);
+      const currentPaid = Number(existingJob?.amount_paid || 0);
       ({ error } = await supabase.from('jobs').update({
         customer_name: form.customerName, phone: form.phone,
         device_model: form.deviceModel, complaint: form.complaint,
         price: Number(form.price), delivery_date: form.deliveryDate,
         delivery_time: form.deliveryTime,
-        amount_paid: Number(form.advancePayment) || 0,
-        balance: Number(form.price) - (Number(form.advancePayment) || 0),
-        status: Number(form.advancePayment) > 0 ? 'Partial' : 'Pending',
+        balance: Number(form.price) - currentPaid,
         created_at: form.jobDate ? new Date(form.jobDate).toISOString() : undefined,
         referred_by: form.referredBy || null,
         staff_name: form.staffName,
@@ -296,6 +298,15 @@ function App() {
       }]));
     }
     if (error) { setLoading(false); alert('Error: ' + error.message); return; }
+
+    if (!form.editId && Number(form.advancePayment) > 0) {
+      await supabase.from('job_payments').insert([{
+        job_id: jobId,
+        amount: Number(form.advancePayment),
+        payment_type: form.cashSale ? 'Full Payment (Cash Sale)' : 'Advance',
+        payment_date: form.jobDate ? new Date(form.jobDate).toISOString().split('T')[0] : today,
+      }]);
+    }
 
     for (const part of selectedParts) {
       await supabase.from('job_parts').insert([{
@@ -372,22 +383,30 @@ function App() {
     }
   };
 
-  const markDelivered = (jobId, phone, price) => {
+ const markDelivered = (jobId, phone, price, currentBalance) => {
+    const outstanding = Number(currentBalance) > 0 ? Number(currentBalance) : Number(price);
     setPaymentModal({
       show: true,
       title: 'Mark as Delivered',
-      subtitle: 'Job: ' + jobId + ' | Total: Rs.' + price,
-      defaultAmount: price,
-      onConfirm: async (amountPaid, date) => {
+      subtitle: 'Job: ' + jobId + ' | Balance Due: Rs.' + outstanding,
+      defaultAmount: outstanding,
+      onConfirm: async (paidNow, date) => {
         setPaymentModal({ show: false });
-        const bal = Number(price) - amountPaid;
+        const amt = Number(paidNow) || 0;
+        const { data: jobRow } = await supabase.from('jobs').select('amount_paid').eq('job_id', jobId).single();
+        const prevPaid = Number(jobRow?.amount_paid || 0);
+        const newTotalPaid = prevPaid + amt;
+        const bal = Number(price) - newTotalPaid;
         const message = bal > 0
-          ? 'Hello! Your device is ready at indian mobiles. Job ID: ' + jobId + '. Amount paid: Rs.' + amountPaid + '. Balance remaining: Rs.' + bal + '. Thank you!'
-          : 'Hello! Your device repair is complete at indian mobiles. Job ID: ' + jobId + '. Amount paid: Rs.' + amountPaid + '. Thank you!';
+          ? 'Hello! Your device is ready at Bharath Mobile Service. Job ID: ' + jobId + '. Amount paid: Rs.' + amt + '. Balance remaining: Rs.' + bal + '. Thank you!'
+          : 'Hello! Your device repair is complete at Bharath Mobile Service. Job ID: ' + jobId + '. Amount paid: Rs.' + amt + '. Thank you!';
         const sendMsg = window.confirm('Send WhatsApp message to ' + phone + '?');
+        await supabase.from('job_payments').insert([{
+          job_id: jobId, amount: amt, payment_type: 'Delivery Payment', payment_date: date,
+        }]);
         const { error } = await supabase.from('jobs').update({
           status: bal > 0 ? 'Partial' : 'Delivered',
-          amount_paid: amountPaid, balance: bal,
+          amount_paid: newTotalPaid, balance: bal < 0 ? 0 : bal,
           delivery_date: date,
         }).eq('job_id', jobId);
         if (!error) {
@@ -403,24 +422,31 @@ function App() {
       }
     });
   };
-  const collectAdvance = (jobId, phone, price) => {
+  const collectAdvance = (jobId, phone, price, currentPaid) => {
     setPaymentModal({
       show: true,
       title: 'Collect Advance',
       subtitle: 'Job: ' + jobId + ' | Total: Rs.' + price,
       defaultAmount: '',
-      onConfirm: async (amountPaid, date) => {
+      onConfirm: async (advanceNow, date) => {
         setPaymentModal({ show: false });
-        const balance = Number(price) - amountPaid;
+        const amt = Number(advanceNow) || 0;
+        const { data: jobRow } = await supabase.from('jobs').select('amount_paid').eq('job_id', jobId).single();
+        const prevPaid = Number(jobRow?.amount_paid || 0);
+        const newTotalPaid = prevPaid + amt;
+        const balance = Number(price) - newTotalPaid;
+        await supabase.from('job_payments').insert([{
+          job_id: jobId, amount: amt, payment_type: 'Advance', payment_date: date,
+        }]);
         const { error } = await supabase.from('jobs').update({
           status: 'Partial',
-          amount_paid: amountPaid,
-          balance: balance,
+          amount_paid: newTotalPaid,
+          balance: balance < 0 ? 0 : balance,
           advance_date: date,
         }).eq('job_id', jobId);
         if (!error) {
           if (date < today) { await recalcCashChain(date); }
-          const message = 'Hello! Advance payment received at indian mobiles. Job ID: ' + jobId + '. Advance paid: Rs.' + amountPaid + '. Balance remaining: Rs.' + balance + '. Thank you!';
+          const message = 'Hello! Advance payment received at Bharath Mobile Service. Job ID: ' + jobId + '. Advance paid: Rs.' + amt + '. Balance remaining: Rs.' + balance + '. Thank you!';
           const sendMsg = window.confirm('Send WhatsApp message to ' + phone + '?');
           if (sendMsg) {
             const url = 'https://wa.me/91' + phone + '?text=' + encodeURIComponent(message);
@@ -441,11 +467,20 @@ function App() {
       defaultAmount: balance,
       onConfirm: async (newPaid, date) => {
         setPaymentModal({ show: false });
-        const newBal = Number(balance) - newPaid;
-        const message = 'Hello! Payment received at indian mobiles. Job ID: ' + jobId + '. Paid now: Rs.' + newPaid + (newBal > 0 ? '. Remaining: Rs.' + newBal : '. Full payment done!') + ' Thank you!';
+        const amt = Number(newPaid) || 0;
+        const { data: jobRow } = await supabase.from('jobs').select('amount_paid, balance').eq('job_id', jobId).single();
+        const prevPaid = Number(jobRow?.amount_paid || 0);
+        const prevBalance = Number(jobRow?.balance || 0);
+        const newTotalPaid = prevPaid + amt;
+        const newBal = prevBalance - amt;
+        const message = 'Hello! Payment received at Bharath Mobile Service. Job ID: ' + jobId + '. Paid now: Rs.' + amt + (newBal > 0 ? '. Remaining: Rs.' + newBal : '. Full payment done!') + ' Thank you!';
         const sendMsg = window.confirm('Send WhatsApp message to ' + phone + '?');
+        await supabase.from('job_payments').insert([{
+          job_id: jobId, amount: amt, payment_type: 'Balance', payment_date: date,
+        }]);
         const { error } = await supabase.from('jobs').update({
           status: newBal <= 0 ? 'Delivered' : 'Partial',
+          amount_paid: newTotalPaid,
           balance: newBal < 0 ? 0 : newBal,
           delivery_date: date,
         }).eq('job_id', jobId);
@@ -461,7 +496,9 @@ function App() {
         }
       }
     });
-  };const markReturned = async (jobId, phone, deviceModel) => {
+  };
+
+  const markReturned = async (jobId, phone, deviceModel) => {
     if (window.confirm('Return ' + deviceModel + ' without repair?')) {
       const message = 'Hello! Your ' + deviceModel + ' could not be repaired. Ready for collection at indian mobiles. Job ID: ' + jobId + '. Sorry for inconvenience. Thank you!';
       const sendMsg = window.confirm('Send WhatsApp message to ' + phone + '?');

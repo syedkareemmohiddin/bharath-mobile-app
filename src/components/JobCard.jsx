@@ -67,13 +67,13 @@ const JobCard = ({ job, jobParts, onEdit, onDelete, onMarkDelivered, onCollectBa
       {/* ACTION BUTTONS */}
       <div style={{ marginTop: 10 }}>
         {(job.status === 'Pending' || job.status === 'Partial') && (
-          <button onClick={() => onMarkDelivered(job.job_id, job.phone, job.price)}
+          <button onClick={() => onMarkDelivered(job.job_id, job.phone, job.price, job.balance)}
             style={{ width: '100%', background: '#1a73e8', color: 'white', border: 'none', borderRadius: 8, padding: 10, fontSize: 13, fontWeight: 'bold', cursor: 'pointer', marginBottom: 6 }}>
             Mark Delivered and Collect Payment
           </button>
         )}
         {job.status === 'Pending' && (
-          <button onClick={() => onCollectAdvance(job.job_id, job.phone, job.price)}
+          <button onClick={() => onCollectAdvance(job.job_id, job.phone, job.price, job.amount_paid)}
             style={{ width: '100%', background: '#f57c00', color: 'white', border: 'none', borderRadius: 8, padding: 10, fontSize: 13, fontWeight: 'bold', cursor: 'pointer', marginBottom: 6 }}>
             💰 Collect Advance
           </button>

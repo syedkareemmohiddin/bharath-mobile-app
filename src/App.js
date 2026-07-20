@@ -281,7 +281,8 @@ function App() {
       }
       await supabase.from('job_parts').delete().eq('job_id', jobId);
     } else {
-      jobId = 'BMS-' + Date.now().toString().slice(-4);
+      const maxJobNum = jobs.length > 0 ? Math.max(...jobs.map(j => parseInt((j.job_id || '').replace(/[^0-9]/g, ''), 10) || 0)) : 0;
+      jobId = 'BMS-' + (maxJobNum + 1);
       const isCashSale = form.cashSale;
       const jobDate = form.jobDate ? new Date(form.jobDate).toISOString().split('T')[0] : today;
       ({ error } = await supabase.from('jobs').insert([{

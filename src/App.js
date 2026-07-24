@@ -365,6 +365,19 @@ function App() {
       a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
+    if (!form.editId && form.referredBy && form.referredBy.trim()) {
+      const referrerJob = jobs.find(j => j.customer_name && j.customer_name.trim().toLowerCase() === form.referredBy.trim().toLowerCase() && j.phone);
+      if (referrerJob) {
+        const thankMsg = 'Hello ' + referrerJob.customer_name + '! Thank you for referring ' + form.customerName + ' to Bharath Mobile Service. We really appreciate your trust in us!';
+        const sendThank = window.confirm('Send Thank-You WhatsApp to referrer ' + referrerJob.customer_name + ' (' + referrerJob.phone + ')?');
+        if (sendThank) {
+          const url2 = 'https://wa.me/91' + referrerJob.phone + '?text=' + encodeURIComponent(thankMsg);
+          const a2 = document.createElement('a');
+          a2.href = url2; a2.target = '_blank'; a2.rel = 'noopener noreferrer';
+          document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+        }
+      }
+    }
     setForm({ customerName: '', phone: '', deviceModel: '', complaint: '', price: '', deliveryDate: '', deliveryTime: '', advancePayment: '', jobDate: '', devicePassword: '', photoUrl: '', cashSale: false, referredBy: '', staffName: '', editId: null, editJobId: null });
     setSelectedParts([]); setNewParts([]);
     fetchAll(); setScreen('home');

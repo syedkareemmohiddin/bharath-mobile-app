@@ -78,6 +78,30 @@ const Customers = ({ jobs, jobParts }) => {
           </div>
         </div>
 
+        {(() => {
+          const referredCustomers = Object.values(customerMap).filter(c =>
+            c.referredBy && c.referredBy.trim().toLowerCase() === selectedCustomer.name.trim().toLowerCase() && c.phone !== selectedCustomer.phone
+          );
+          if (referredCustomers.length === 0) return null;
+          return (
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 10 }}>
+                👥 Referred by {selectedCustomer.name} ({referredCustomers.length})
+              </div>
+              {referredCustomers.map((rc, i) => (
+                <div key={i} onClick={() => setSelectedPhone(rc.phone)}
+                  style={{ background: 'white', borderRadius: 10, padding: 12, marginBottom: 8, boxShadow: '0 1px 4px rgba(0,0,0,0.1)', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 'bold', color: '#333' }}>{rc.name}</div>
+                    <div style={{ fontSize: 11, color: '#666' }}>📞 {rc.phone}</div>
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 'bold', color: '#2e7d32' }}>Rs.{rc.totalSpent}</div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+
         <div style={{ fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 10 }}>Repair History</div>
         {selectedJobs.map((job, i) => {
           const parts = jobParts ? jobParts.filter(p => p.job_id === job.job_id) : [];

@@ -892,6 +892,7 @@ function App() {
       {screen === 'paymenthistory' && (
         <PaymentHistory
           jobId={selectedJobId} jobs={jobs} jobPayments={jobPayments}
+          jobParts={jobParts} purchases={purchases}
           fetchAll={fetchAll} setScreen={setScreen}
           recalcCashChain={recalcCashChain} today={today}
         />

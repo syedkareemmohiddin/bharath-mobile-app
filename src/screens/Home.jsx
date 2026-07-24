@@ -4,6 +4,37 @@ import JobCard from '../components/JobCard';
 
 const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, todaySales, todayExpenses, todayPurchases, todayCashPurchases, todayPartsCost, todayVendorPayments, todayBankDeposits, todayBankWithdrawals, todayNetProfit, totalCollected, vendorPayable, today, setScreen, fetchAll, onMarkDelivered, onCollectBalance, onMarkReturned, onEditJob, onDeleteJob, onCollectAdvance, filteredTx, filterDateFrom, filterDateTo, setFilterDateFrom, setFilterDateTo, openingCash, saveOpeningCash, cashInHand, closingCash, dashDate, setDashDate, getDayData }) => {
   const [showBillWise, setShowBillWise] = React.useState(false);
+
+  const MONTHLY_TARGET = 130000;
+  const [monthlyProfit, setMonthlyProfit] = React.useState(null);
+  const [monthlyLoading, setMonthlyLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    const calcMonth = async () => {
+      setMonthlyLoading(true);
+      const [year, month] = dashDate.split('-');
+      const daysInMonth = new Date(Number(year), Number(month), 0).getDate();
+      let total = 0;
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${month}-${String(day).padStart(2, '0')}`;
+        if (dateStr > today) break;
+        if (dateStr === today) {
+          total += Number(todayNetProfit || 0);
+        } else {
+          const data = await getDayData(dateStr);
+          total += Number((data && data.netProfit) || 0);
+        }
+      }
+      if (!cancelled) {
+        setMonthlyProfit(total);
+        setMonthlyLoading(false);
+      }
+    };
+    calcMonth();
+    return () => { cancelled = true; };
+  }, [dashDate, today, todayNetProfit, getDayData]);
+
   const [dayData, setDayData] = React.useState(null);
   const [dayDataLoading, setDayDataLoading] = React.useState(false);
 
@@ -83,6 +114,31 @@ const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, t
       </div>
 
       <div style={{ padding: '0 16px' }}>
+
+        {!monthlyLoading && monthlyProfit !== null && (
+          <div style={{
+            background: monthlyProfit >= MONTHLY_TARGET ? 'rgba(74,222,128,0.08)' : 'rgba(248,113,113,0.08)',
+            border: '1px solid ' + (monthlyProfit >= MONTHLY_TARGET ? 'rgba(74,222,128,0.3)' : 'rgba(248,113,113,0.3)'),
+            borderRadius: 14, padding: 16, marginTop: 16, marginBottom: 16
+          }}>
+            <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
+              Monthly Net Profit ({dashDate.slice(0, 7)})
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <div style={{ fontSize: 24, fontWeight: '800', color: monthlyProfit >= MONTHLY_TARGET ? '#4ade80' : '#f87171' }}>
+                {fmtRs(monthlyProfit)}
+              </div>
+              <div style={{ fontSize: 12, fontWeight: '700', color: monthlyProfit >= MONTHLY_TARGET ? '#4ade80' : '#f87171' }}>
+                {monthlyProfit >= MONTHLY_TARGET
+                  ? '+' + fmtRs(monthlyProfit - MONTHLY_TARGET) + ' above target'
+                  : fmtRs(MONTHLY_TARGET - monthlyProfit) + ' short of target'}
+              </div>
+            </div>
+            <div style={{ fontSize: 11, color: '#475569', marginTop: 4 }}>
+              Target Rs.{MONTHLY_TARGET.toLocaleString('en-IN')}
+            </div>
+          </div>
+        )}
 
         {/* INCOME/EXPENSE CARDS */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 16, marginBottom: 16 }}>

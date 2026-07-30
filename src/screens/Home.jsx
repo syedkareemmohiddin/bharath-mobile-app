@@ -2,9 +2,8 @@ import React from 'react';
 // import { fmtDate } from '../utils/format';
 import JobCard from '../components/JobCard';
 
-const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, todaySales, todayExpenses, todayPurchases, todayCashPurchases, todayPartsCost, todayVendorPayments, todayBankDeposits, todayBankWithdrawals, todayNetProfit, totalCollected, vendorPayable, today, setScreen, fetchAll, onMarkDelivered, onCollectBalance, onMarkReturned, onEditJob, onDeleteJob, onCollectAdvance, filteredTx, filterDateFrom, filterDateTo, setFilterDateFrom, setFilterDateTo, openingCash, saveOpeningCash, cashInHand, closingCash, dashDate, setDashDate, getDayData }) => {
+const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, todaySales, todayExpenses, todayPurchases, todayCashPurchases, todayPartsCost, todayVendorPayments, todayBankDeposits, todayBankWithdrawals, todayNetProfit, totalCollected, vendorPayable, today, setScreen, fetchAll, onMarkDelivered, onCollectBalance, onMarkReturned, onEditJob, onDeleteJob, onCollectAdvance, filteredTx, filterDateFrom, filterDateTo, setFilterDateFrom, setFilterDateTo, openingCash, saveOpeningCash, cashInHand, closingCash, dashDate, setDashDate, getDayData, monthlyTargets, saveMonthlyTarget }) => {
   const [showBillWise, setShowBillWise] = React.useState(false);
-
   const [dayData, setDayData] = React.useState(null);
   const [dayDataLoading, setDayDataLoading] = React.useState(false);
 
@@ -25,36 +24,11 @@ const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, t
   const [billWiseDate, setBillWiseDate] = React.useState(today);
   const [showRecentJobs, setShowRecentJobs] = React.useState(false);
   const [showTransactions, setShowTransactions] = React.useState(false);
-const MONTHLY_TARGET = 130000;
-const [monthlyProfit, setMonthlyProfit] = React.useState(null);
-const [monthlyLoading, setMonthlyLoading] = React.useState(true);
+  const [editingTarget, setEditingTarget] = React.useState(false);
+  const [targetInput, setTargetInput] = React.useState('');
 
-React.useEffect(() => {
-  let cancelled = false;
-  const calcMonth = async () => {
-    setMonthlyLoading(true);
-    const [year, month] = dashDate.split('-');
-    const daysInMonth = new Date(Number(year), Number(month), 0).getDate();
-    let total = 0;
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dateStr = `${year}-${month}-${String(day).padStart(2, '0')}`;
-      if (dateStr > today) break;
-      if (dateStr === today) {
-        total += Number(todayNetProfit || 0);
-      } else {
-        const data = await getDayData(dateStr);
-        total += Number((data && data.netProfit) || 0);
-      }
-    }
-    if (!cancelled) {
-      setMonthlyProfit(total);
-      setMonthlyLoading(false);
-    }
-  };
-  calcMonth();
-  return () => { cancelled = true; };
-}, [dashDate, today, todayNetProfit, getDayData]);
   const isToday = dashDate === today;
+  const currentMonth = dashDate.slice(0, 7);
 
   const d = isToday ? {
     collected: todayCollected, advances: todayAdvances, sales: todaySales,
@@ -67,6 +41,43 @@ React.useEffect(() => {
   const closing = isToday ? closingCash : d.opening + d.collected + d.advances + d.sales - d.expenses - d.cashPurchases - d.vendorPayments - (d.bankDeposits || 0) + (d.bankWithdrawals || 0);
 
   const fmtRs = (n) => 'Rs.' + Number(n || 0).toLocaleString('en-IN');
+
+  // Fast monthly profit — computed directly from already-loaded jobs/sales/jobParts, no extra network calls.
+  const monthlyProfit = React.useMemo(() => {
+    const [year, month] = currentMonth.split('-');
+    const monthPrefix = year + '-' + month;
+    let total = 0;
+    jobs.forEach(job => {
+      if ((job.status === 'Delivered' || job.status === 'Partial') && job.delivery_date && job.delivery_date.startsWith(monthPrefix)) {
+        const parts = jobParts ? jobParts.filter(p => p.job_id === job.job_id) : [];
+        const partsCost = parts.reduce((s, p) => s + Number(p.total || 0), 0);
+        total += Number(job.amount_paid || 0) - partsCost;
+      }
+    });
+    if (sales) {
+      sales.forEach(s => {
+        if (s.created_at && s.created_at.startsWith(monthPrefix)) {
+          const profit = s.purchase_cost > 0 ? (Number(s.price) - Number(s.purchase_cost)) * Number(s.quantity) : Number(s.total);
+          total += profit;
+        }
+      });
+    }
+    return Math.round(total * 100) / 100;
+  }, [jobs, jobParts, sales, currentMonth]);
+
+  const monthlyTarget = Number((monthlyTargets && monthlyTargets[currentMonth]) || 0);
+  const hasTarget = monthlyTarget > 0;
+
+  const startEditingTarget = () => {
+    setTargetInput(monthlyTarget > 0 ? String(monthlyTarget) : '');
+    setEditingTarget(true);
+  };
+
+  const saveTarget = () => {
+    const val = Number(targetInput) || 0;
+    saveMonthlyTarget(currentMonth, val);
+    setEditingTarget(false);
+  };
 
   return (
     <div style={{ background: '#0f172a', minHeight: '100vh', padding: '0 0 90px 0' }}>
@@ -112,32 +123,63 @@ React.useEffect(() => {
       </div>
 
       <div style={{ padding: '0 16px' }}>
-{!monthlyLoading && monthlyProfit !== null && (
-  <div style={{
-    background: monthlyProfit >= MONTHLY_TARGET ? 'rgba(74,222,128,0.08)' : 'rgba(248,113,113,0.08)',
-    border: '1px solid ' + (monthlyProfit >= MONTHLY_TARGET ? 'rgba(74,222,128,0.3)' : 'rgba(248,113,113,0.3)'),
-    borderRadius: 14, padding: 16, marginTop: 16, marginBottom: 16
-  }}>
-    <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
-      Monthly Net Profit ({dashDate.slice(0, 7)})
-    </div>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-      <div style={{ fontSize: 24, fontWeight: '800', color: monthlyProfit >= MONTHLY_TARGET ? '#4ade80' : '#f87171' }}>
-        {fmtRs(monthlyProfit)}
-      </div>
-      <div style={{ fontSize: 12, fontWeight: '700', color: monthlyProfit >= MONTHLY_TARGET ? '#4ade80' : '#f87171' }}>
-        {monthlyProfit >= MONTHLY_TARGET
-          ? '+' + fmtRs(monthlyProfit - MONTHLY_TARGET) + ' above target'
-          : fmtRs(MONTHLY_TARGET - monthlyProfit) + ' short of target'}
-      </div>
-    </div>
-    <div style={{ fontSize: 11, color: '#475569', marginTop: 4 }}>
-      Target Rs.{MONTHLY_TARGET.toLocaleString('en-IN')}
-    </div>
-  </div>
-)}
+
+        {/* MONTHLY TARGET */}
+        <div style={{
+          background: !hasTarget ? 'rgba(255,255,255,0.04)' : (monthlyProfit >= monthlyTarget ? 'rgba(74,222,128,0.08)' : 'rgba(248,113,113,0.08)'),
+          border: '1px solid ' + (!hasTarget ? 'rgba(255,255,255,0.08)' : (monthlyProfit >= monthlyTarget ? 'rgba(74,222,128,0.3)' : 'rgba(248,113,113,0.3)')),
+          borderRadius: 14, padding: 16, marginTop: 16, marginBottom: 16
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <div style={{ fontSize: 12, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1 }}>
+              Monthly Net Profit ({currentMonth})
+            </div>
+            {!editingTarget && (
+              <button onClick={startEditingTarget}
+                style={{ background: 'transparent', border: 'none', color: '#38bdf8', fontSize: 11, cursor: 'pointer', padding: 0 }}>
+                {hasTarget ? '✏️ Edit Target' : '+ Set Target'}
+              </button>
+            )}
+          </div>
+
+          {editingTarget ? (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input type='number' value={targetInput} onChange={e => setTargetInput(e.target.value)}
+                placeholder='Target amount for this month'
+                autoFocus
+                style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(56,189,248,0.3)', fontSize: 14, color: '#38bdf8', background: 'rgba(56,189,248,0.08)', outline: 'none' }} />
+              <button onClick={saveTarget}
+                style={{ background: '#38bdf8', color: '#0f172a', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer' }}>
+                Save
+              </button>
+              <button onClick={() => setEditingTarget(false)}
+                style={{ background: 'rgba(255,255,255,0.08)', color: '#94a3b8', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 13, cursor: 'pointer' }}>
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <div style={{ fontSize: 24, fontWeight: '800', color: !hasTarget ? '#f1f5f9' : (monthlyProfit >= monthlyTarget ? '#4ade80' : '#f87171') }}>
+                  {fmtRs(monthlyProfit)}
+                </div>
+                {hasTarget && (
+                  <div style={{ fontSize: 12, fontWeight: '700', color: monthlyProfit >= monthlyTarget ? '#4ade80' : '#f87171' }}>
+                    {monthlyProfit >= monthlyTarget
+                      ? '+' + fmtRs(monthlyProfit - monthlyTarget) + ' above target'
+                      : fmtRs(monthlyTarget - monthlyProfit) + ' short of target'}
+                  </div>
+                )}
+              </div>
+              <div style={{ fontSize: 11, color: '#475569', marginTop: 4 }}>
+                {hasTarget ? 'Target Rs.' + monthlyTarget.toLocaleString('en-IN') : 'No target set for this month'}
+              </div>
+            </>
+          )}
+        </div>
+
         {/* INCOME/EXPENSE CARDS */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 16, marginBottom: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
           {[
             { label: 'Repair Collected', value: d.collected, icon: '🔧', color: '#4ade80', bg: 'rgba(74,222,128,0.08)', border: 'rgba(74,222,128,0.2)' },
             { label: 'Accessories Sales', value: d.sales, icon: '🛍', color: '#60a5fa', bg: 'rgba(96,165,250,0.08)', border: 'rgba(96,165,250,0.2)' },

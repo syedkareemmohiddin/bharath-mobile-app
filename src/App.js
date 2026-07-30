@@ -52,6 +52,7 @@ function App() {
   const [filterDateTo, setFilterDateTo] = useState('');
   const [loading, setLoading] = useState(false);
   const [openingCash, setOpeningCash] = useState(0);
+  const [monthlyTargets, setMonthlyTargets] = useState({});
   const [dashDate, setDashDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentModal, setPaymentModal] = useState({ show: false, title: '', subtitle: '', defaultAmount: '', onConfirm: null });
   const [form, setForm] = useState({
@@ -92,6 +93,12 @@ function App() {
       supabase.from('staff').select('*').order('name'),
       supabase.from('job_payments').select('*').order('created_at', { ascending: false }),
     ]);
+    const { data: mtData } = await supabase.from('monthly_targets').select('*');
+if (mtData) {
+  const map = {};
+  mtData.forEach(row => { map[row.month] = row.target_amount; });
+  setMonthlyTargets(map);
+}
     if (!j.error) setJobs(j.data);
     if (!v.error) setVendors(v.data);
     if (!p.error) setPurchases(p.data);
@@ -130,7 +137,8 @@ function App() {
     }
   };
 
-  const saveOpeningCash = async (amount) => {
+  
+ const saveOpeningCash = async (amount) => {
     const todayDate = new Date().toISOString().split('T')[0];
     const { data } = await supabase.from('daily_cash').select('*').eq('date', todayDate);
     if (data && data.length > 0) {
@@ -139,6 +147,16 @@ function App() {
       await supabase.from('daily_cash').insert([{ date: todayDate, opening_balance: amount }]);
     }
     setOpeningCash(amount);
+  };
+
+  const saveMonthlyTarget = async (month, amount) => {
+    const { data } = await supabase.from('monthly_targets').select('*').eq('month', month);
+    if (data && data.length > 0) {
+      await supabase.from('monthly_targets').update({ target_amount: amount }).eq('month', month);
+    } else {
+      await supabase.from('monthly_targets').insert([{ month, target_amount: amount }]);
+    }
+    setMonthlyTargets(prev => ({ ...prev, [month]: amount }));
   };
 
   const getDayData = async (date) => {
@@ -823,6 +841,7 @@ const openPaymentHistory = (jobId) => {
           filterDateFrom={filterDateFrom} filterDateTo={filterDateTo}
           setFilterDateFrom={setFilterDateFrom} setFilterDateTo={setFilterDateTo}
           openingCash={openingCash} saveOpeningCash={saveOpeningCash}
+          monthlyTargets={monthlyTargets} saveMonthlyTarget={saveMonthlyTarget}
           cashInHand={cashInHand}
           closingCash={closingCash}
           dashDate={dashDate} setDashDate={setDashDate} getDayData={getDayData}

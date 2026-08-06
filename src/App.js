@@ -117,17 +117,21 @@ if (mtData) {
     if (dcData && dcData.length > 0) {
       setOpeningCash(dcData[0].opening_balance || 0);
     } else {
-      // Poori history se cumulative opening calculate karo — kisi ek din ke record pe depend nahi karta,
-      // isliye beech mae koi din miss ho to bhi ye kabhi 0 nahi dikhayega.
-      const cumCollected = j.data ? j.data.filter(job => (job.status === 'Delivered' || job.status === 'Partial') && job.delivery_date && job.delivery_date < todayDate).reduce((sum, job) => sum + Number(job.amount_paid || 0), 0) : 0;
-      const cumAdvances = j.data ? j.data.filter(job => job.advance_date && job.advance_date < todayDate).reduce((sum, job) => sum + Number(job.amount_paid || 0), 0) : 0;
-      const cumSales = s.data ? s.data.filter(sale => sale.created_at && sale.created_at.split('T')[0] < todayDate).reduce((sum, sale) => sum + Number(sale.total || 0), 0) : 0;
-      const cumExpenses = e.data ? e.data.filter(exp => exp.created_at && exp.created_at.split('T')[0] < todayDate && exp.payment_source !== 'Bank').reduce((sum, exp) => sum + Number(exp.amount || 0), 0) : 0;
-      const cumCashPurchases = p.data ? p.data.filter(pur => (pur.purchase_date || (pur.created_at ? pur.created_at.split('T')[0] : '')) < todayDate && pur.payment_type === 'Cash').reduce((sum, pur) => sum + Number(pur.total || 0), 0) : 0;
-      const cumVendorPayments = vp.data ? vp.data.filter(payment => payment.created_at && payment.created_at.split('T')[0] < todayDate && payment.payment_source !== 'Bank').reduce((sum, payment) => sum + Number(payment.amount || 0), 0) : 0;
-      const cumBankDeposits = bt.data ? bt.data.filter(t => t.transaction_type === 'Deposit' && t.transaction_date < todayDate).reduce((s, t) => s + Number(t.amount || 0), 0) : 0;
-      const cumBankWithdrawals = bt.data ? bt.data.filter(t => t.transaction_type === 'Withdraw' && t.transaction_date < todayDate).reduce((s, t) => s + Number(t.amount || 0), 0) : 0;
-      const computedOpening = cumCollected + cumAdvances + cumSales - cumExpenses - cumCashPurchases - cumVendorPayments - cumBankDeposits + cumBankWithdrawals;
+      // Sabse latest maujooda record ko anchor maano, aur sirf us gap ka hisaab jodo — poori history dobara nahi.
+      const { data: anchorRows } = await supabase.from('daily_cash').select('*').lt('date', todayDate).order('date', { ascending: false }).limit(1);
+      const anchorDate = (anchorRows && anchorRows.length > 0) ? anchorRows[0].date : '0000-00-00';
+      const anchorOpening = (anchorRows && anchorRows.length > 0) ? Number(anchorRows[0].opening_balance || 0) : 0;
+
+      const gapCollected = j.data ? j.data.filter(job => (job.status === 'Delivered' || job.status === 'Partial') && job.delivery_date && job.delivery_date >= anchorDate && job.delivery_date < todayDate).reduce((sum, job) => sum + Number(job.amount_paid || 0), 0) : 0;
+      const gapAdvances = j.data ? j.data.filter(job => job.advance_date && job.advance_date >= anchorDate && job.advance_date < todayDate).reduce((sum, job) => sum + Number(job.amount_paid || 0), 0) : 0;
+      const gapSales = s.data ? s.data.filter(sale => sale.created_at && sale.created_at.split('T')[0] >= anchorDate && sale.created_at.split('T')[0] < todayDate).reduce((sum, sale) => sum + Number(sale.total || 0), 0) : 0;
+      const gapExpenses = e.data ? e.data.filter(exp => exp.created_at && exp.created_at.split('T')[0] >= anchorDate && exp.created_at.split('T')[0] < todayDate && exp.payment_source !== 'Bank').reduce((sum, exp) => sum + Number(exp.amount || 0), 0) : 0;
+      const gapCashPurchases = p.data ? p.data.filter(pur => { const pd = pur.purchase_date || (pur.created_at ? pur.created_at.split('T')[0] : ''); return pd >= anchorDate && pd < todayDate && pur.payment_type === 'Cash'; }).reduce((sum, pur) => sum + Number(pur.total || 0), 0) : 0;
+      const gapVendorPayments = vp.data ? vp.data.filter(payment => payment.created_at && payment.created_at.split('T')[0] >= anchorDate && payment.created_at.split('T')[0] < todayDate && payment.payment_source !== 'Bank').reduce((sum, payment) => sum + Number(payment.amount || 0), 0) : 0;
+      const gapBankDeposits = bt.data ? bt.data.filter(t => t.transaction_type === 'Deposit' && t.transaction_date >= anchorDate && t.transaction_date < todayDate).reduce((s, t) => s + Number(t.amount || 0), 0) : 0;
+      const gapBankWithdrawals = bt.data ? bt.data.filter(t => t.transaction_type === 'Withdraw' && t.transaction_date >= anchorDate && t.transaction_date < todayDate).reduce((s, t) => s + Number(t.amount || 0), 0) : 0;
+
+      const computedOpening = anchorOpening + gapCollected + gapAdvances + gapSales - gapExpenses - gapCashPurchases - gapVendorPayments - gapBankDeposits + gapBankWithdrawals;
       await supabase.from('daily_cash').insert([{ date: todayDate, opening_balance: computedOpening }]);
       setOpeningCash(computedOpening);
     }

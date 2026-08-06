@@ -112,7 +112,7 @@ if (mtData) {
     if (!sf.error) setStaff(sf.data);
     if (!jpay.error) setJobPayments(jpay.data);
     const todayDate = new Date().toISOString().split('T')[0];
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    
     const { data: dcData } = await supabase.from('daily_cash').select('*').eq('date', todayDate);
     if (dcData && dcData.length > 0) {
       setOpeningCash(dcData[0].opening_balance || 0);
